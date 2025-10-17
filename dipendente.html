@@ -203,7 +203,7 @@
 
         // Handle logout
         document.getElementById("logoutBtn").addEventListener("click", () => {
-          keycloak.logout({ redirectUri: "http://localhost:3000/login.html" });
+          keycloak.logout({ redirectUri: "http://localhost:3000/utente.html" });
         });
       } catch (err) {
         console.error("Errore inizializzazione Keycloak:", err);
