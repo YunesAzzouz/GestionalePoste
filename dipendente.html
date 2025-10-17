@@ -5,21 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pannello Dipendente</title>
   <style>
-    /* === COLORI BASE === */
     :root {
       --blu-poste: #0053a0;
       --giallo-poste: #ffcc00;
       --grigio-chiaro: #f4f6f8;
-
-      /* Colori della navbar */
-      --color-blue-light: #478eb9; /* Blu Chiaro */
-      --color-yellow-accent: #fcce43; /* Giallo Vibrante */
+      --color-blue-light: #478eb9;
+      --color-yellow-accent: #fcce43;
       --color-bg-light: #fefefe;
       --color-text: #333;
       --color-border-light: #eee;
     }
 
-    /* === NAVBAR === */
     .navbar {
       align-items: center;
       justify-content: space-between;
@@ -33,10 +29,7 @@
       box-sizing: border-box;
     }
 
-    .logo {
-      height: 80px;
-      width: auto;
-    }
+    .logo { height: 80px; width: auto; }
 
     .navbar h1 {
       font-size: 32px;
@@ -55,11 +48,8 @@
       transition: 0.3s;
     }
 
-    .btn-login:hover {
-      background-color: #ffd84d;
-    }
+    .btn-login:hover { background-color: #ffd84d; }
 
-    /* === CORPO PAGINA === */
     body {
       font-family: 'Helvetica Neue', Arial, sans-serif;
       background-color: #fff;
@@ -79,13 +69,8 @@
       align-items: center;
     }
 
-    h1 {
-      color: var(--blu-poste);
-      font-size: 36px;
-      margin-bottom: 20px;
-    }
+    h1 { color: var(--blu-poste); font-size: 36px; margin-bottom: 20px; }
 
-    /* === BOX UTENTE CORRENTE === */
     #currentBox {
       width: 95%;
       max-width: 1100px;
@@ -105,13 +90,8 @@
       font-weight: 700;
     }
 
-    #currentBox span {
-      color: var(--giallo-poste);
-      font-size: 24px;
-      font-weight: 700;
-    }
+    #currentBox span { color: var(--giallo-poste); font-size: 24px; font-weight: 700; }
 
-    /* === TABELLA CODA === */
     table {
       width: 95%;
       max-width: 1100px;
@@ -135,17 +115,9 @@
       font-size: 20px;
     }
 
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    tr:hover { background-color: var(--giallo-poste); color: #000; transition: 0.2s; }
 
-    tr:hover {
-      background-color: var(--giallo-poste);
-      color: #000;
-      transition: 0.2s;
-    }
-
-    /* === BOTTONI === */
     .btn-container {
       display: flex;
       gap: 20px;
@@ -164,51 +136,33 @@
       box-shadow: 0 3px 6px rgba(0,0,0,0.15);
     }
 
-    #nextBtn {
-      background-color: #4caf50;
-    }
-    #nextBtn:hover {
-      background-color: #43a047;
-    }
+    #nextBtn { background-color: #4caf50; }
+    #nextBtn:hover { background-color: #43a047; }
 
-    #endBtn {
-      background-color: #e53935;
-    }
-    #endBtn:hover {
-      background-color: #c62828;
-    }
+    #endBtn { background-color: #e53935; }
+    #endBtn:hover { background-color: #c62828; }
 
     @media screen and (max-width: 660px) {
-      .navbar h1 {
-        font-size: 22px;
-      }
-      .btn-login {
-        font-size: 14px;
-        padding: 8px 12px;
-      }
+      .navbar h1 { font-size: 22px; }
+      .btn-login { font-size: 14px; padding: 8px 12px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- NAVBAR -->
   <div class="navbar">
     <img src="img/logo.png" class="logo" alt="Logo Poste"/>
-    <h1><strong>Biglietteria</strong></h1>
-    <button class="btn-login" onclick="location.href='index.html'">
-      Loggati se fai parte del nostro team
-    </button>
+    <h1><strong>Pannello Dipendente</strong></h1>
+    <button id="logoutBtn" class="btn-login">Logout</button>
   </div>
 
   <main>
     <h1>Pannello Dipendente</h1>
 
-    <!-- BOX UTENTE IN SERVIZIO -->
     <div id="currentBox">
       <h2>Attualmente stai servendo: <span id="currentInfo">Nessun utente</span></h2>
     </div>
 
-    <!-- TABELLA CODA -->
     <table id="queueTable">
       <thead>
         <tr>
@@ -228,7 +182,38 @@
     </div>
   </main>
 
+  <!-- Keycloak JS -->
+  <script src="https://cdn.jsdelivr.net/npm/keycloak-js@23.0.3/dist/keycloak.min.js"></script>
+
   <script>
+    // Initialize Keycloak client
+    const keycloak = new Keycloak({
+      url: "http://localhost:8080",
+      realm: "PosteApp",
+      clientId: "poste-frontend"
+    });
+
+    async function initKeycloak() {
+      try {
+        const authenticated = await keycloak.init({ onLoad: "check-sso" });
+        if (!authenticated) {
+          window.location.href = "login.html";
+          return;
+        }
+
+        // Handle logout
+        document.getElementById("logoutBtn").addEventListener("click", () => {
+          keycloak.logout({ redirectUri: "http://localhost:3000/login.html" });
+        });
+      } catch (err) {
+        console.error("Errore inizializzazione Keycloak:", err);
+        window.location.href = "login.html";
+      }
+    }
+
+    initKeycloak();
+
+    // === Queue Logic (unchanged) ===
     const queueBody = document.getElementById("queueBody");
     const currentInfo = document.getElementById("currentInfo");
     let currentUser = JSON.parse(localStorage.getItem("currentUser"));
