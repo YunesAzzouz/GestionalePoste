@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="CSS/Utente.css">
+    <link rel="stylesheet" href="CSS/style.css">
+</head>
+<body> 
+    <div class="navbar">
+        <img src="img/logo.png" class="logo"/>
+        <h1><strong> Biglietteria</strong></h1>
+        <button class="btn-login">Loggati se fai parte del nostro team</button>
+    </div>
+    <br />
+    <div class="container-biglietto">
+        <div id="selezione-operazione">
+        <h2>Seleziona l'Operazione</h2>
+        <select id="operazione-scelta" name="operazione">
+            <option value="">-- Seleziona un'operazione --</option>
+            <option value="7">Pagamento bollette/bollettini</option>
+            <option value="14">Invio pacchi/lettere</option>
+            <option value="9">Ritiro pacchi/lettere</option>
+            <option value="6">Pagamento bollo auto e moto</option>
+            <option value="3">Ricarica Postepay</option>
+            <option value="3">Ricarica telefonica</option>
+            <option value="7">Bonifico</option>
+            <option value="10">Ritiro pensione</option>
+            <option value="6">Deposito denaro</option>
+            <option value="10">Ritiro denaro</option>
+            <option value="25">Apertura conto Poste</option>
+            <option value="22">Richiesta passaporto</option>
+        </select>
+        <br />
+
+        <button class="btn-genera-biglietto"><strong>CREA BIGLIETTO</strong></button>
+
+        <br />
+        <br />
+
+        <div id="biglietto-emesso" class="ticket-box">
+            <h3>IL TUO BIGLIETTO</h3>
+            <div class="dettaglio-biglietto">
+                <p><strong>Numero Ticket:</strong></p>
+                <span class="ticket-output">B042</span>
+            </div>
+            <div class="dettaglio-biglietto">
+                <p><strong>Operazione:</strong></p>
+                <span class="ticket-output">Ritiro pacchi/lettere</span>
+            </div>
+            <div class="dettaglio-biglietto">
+                <p><strong>Sportello di Riferimento:</strong></p>
+                <span class="ticket-output">Sportello 2</span>
+            </div>
+        </div>
+    </div>
+
+    <h2>TEMPI DI ATTESA STIMATI</h2>
+    <br />
+    <table class="tabella-attesa">
+        <thead>
+            <tr class="riga">
+                <th>Sportello</th>
+                <th>Numero Ticket</th>
+                <th>Tempo Rimanente</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="riga">
+                <td>1</td>
+                <td>A001</td>
+                <td>5 min</td>
+            </tr>
+            <tr class="riga">
+                <td>2</td>
+                <td>B041</td>
+                <td>12 min</td>
+            </tr>
+            <tr class="riga">
+                <td>3</td>
+                <td>C015</td>
+                <td>2 min</td>
+            </tr>
+            </tbody>
+    </table>
+</body>
+</html>

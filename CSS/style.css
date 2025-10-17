@@ -1,0 +1,36 @@
+:root {
+    --color-blue-light: #478eb9; /* Blu Chiaro */
+    --color-yellow-accent: #fcce43; /* Giallo Vibrante */
+    --color-bg-light: #fefefe;
+    --color-text: #333;
+    --color-border-light: #eee;
+}
+
+.navbar{
+    align-items: center;
+    justify-content: space-between;
+    overflow: hidden;
+    display: flex;
+    height: 100px;
+    width: 98%;
+    border-bottom: 2px solid var(--color-blue-light);
+}
+
+
+.logo{
+    height: 280px;
+    width: 270px;
+}
+
+/* Stile Generale e Reset (non modificati) */
+body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background-color: #fff;
+    color: var(--color-text);
+    display: block; 
+    padding: 0px 0px;
+}
+
+@media screen and (max-width: 660px){
+    
+}
