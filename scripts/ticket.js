@@ -6,33 +6,61 @@ const ticketNumero = document.getElementById('ticket-numero');
 const ticketOperazione = document.getElementById('ticket-operazione');
 const ticketSportello = document.getElementById('ticket-sportello');
 
-// Initialize localStorage ticket counter if not existing
-if (!localStorage.getItem('ticketCounter')) {
-  localStorage.setItem('ticketCounter', '0');
+// Mapping operazione → prefix + estimated time (in minutes)
+const operazioniMap = {
+  "Pagamento bollette/bollettini": { prefix: "A", time: 7 },
+  "Invio pacchi/lettere": { prefix: "B", time: 14 },
+  "Ritiro pacchi/lettere": { prefix: "C", time: 9 },
+  "Pagamento bollo auto e moto": { prefix: "D", time: 6 },
+  "Ricarica Postepay": { prefix: "E", time: 3 },
+  "Ricarica telefonica": { prefix: "F", time: 3 },
+  "Bonifico": { prefix: "G", time: 7 },
+  "Ritiro pensione": { prefix: "H", time: 10 },
+  "Deposito denaro": { prefix: "I", time: 6 },
+  "Ritiro denaro": { prefix: "L", time: 10 },
+  "Apertura conto Poste": { prefix: "M", time: 25 },
+  "Richiesta passaporto": { prefix: "N", time: 22 }
+};
+
+// Initialize localStorage counters
+for (const key in operazioniMap) {
+  const prefix = operazioniMap[key].prefix;
+  if (!localStorage.getItem(`counter_${prefix}`)) {
+    localStorage.setItem(`counter_${prefix}`, '0');
+  }
 }
 
-// Handle ticket generation
-btnGenera.addEventListener('click', () => {
+btnGenera.addEventListener('click', async () => {
   const operazione = selectOperazione.value;
-
   if (!operazione) {
-    alert("⚠️ Seleziona un'operazione prima di creare il biglietto!");
+    alert("Seleziona un'operazione prima di creare il biglietto!");
     return;
   }
 
-  // Increment ticket counter
-  let counter = parseInt(localStorage.getItem('ticketCounter')) + 1;
-  localStorage.setItem('ticketCounter', counter.toString());
+  const { prefix, time } = operazioniMap[operazione];
+  let counter = parseInt(localStorage.getItem(`counter_${prefix}`)) + 1;
+  localStorage.setItem(`counter_${prefix}`, counter.toString());
 
-  // Format ticket number (e.g., B001, B002, etc.)
-  const ticketNumber = `B${String(counter).padStart(3, '0')}`;
+  const ticketNumber = `${prefix}${String(counter).padStart(3, '0')}`;
 
-  // Random sportello (1–3 for now)
-  const sportello = Math.floor(Math.random() * 3) + 1;
+  try {
+    const res = await fetch("http://localhost:3000/api/ticket", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: ticketNumber,
+        tempo_operazione: time
+      })
+    });
 
-  // Display generated ticket
-  ticketNumero.textContent = ticketNumber;
-  ticketOperazione.textContent = operazione;
-  ticketSportello.textContent = `Sportello ${sportello}`;
-  ticketBox.style.display = 'block';
+    const data = await res.json();
+
+    ticketNumero.textContent = ticketNumber;
+    ticketOperazione.textContent = operazione;
+    ticketSportello.textContent = `Sportello ${data.fk_coda} (Attesa stimata: ${data.tempo_attesa} min)`;
+    ticketBox.style.display = 'block';
+  } catch (err) {
+    console.error("Errore:", err);
+    alert("Errore durante la creazione del biglietto");
+  }
 });
