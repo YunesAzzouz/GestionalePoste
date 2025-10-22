@@ -108,3 +108,12 @@ h3 {
     justify-content: center;
     align-items: center;
 }
+
+/* Stile Generale e Reset (non modificati) */
+body {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  background-color: #fff;
+  color: var(--color-text);
+  display: block;
+  padding: 0px 0px;
+}
