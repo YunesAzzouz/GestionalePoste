@@ -2,9 +2,7 @@ version: "3.8"
 
 services:
   keycloak:
-    build:
-      context: ./docker/keycloak
-      dockerfile: Dockerfile
+    build: ./docker/key-cloak
     container_name: keycloak
     ports:
       - "8080:8080"
@@ -16,7 +14,7 @@ services:
 
   backend:
     build:
-      context: ./docker/backend
+      context: .
       dockerfile: Dockerfile
     container_name: gestionale-poste
     ports:
