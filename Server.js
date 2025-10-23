@@ -15,6 +15,14 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "Utente.html"));
 });
 
+app.get("/dipendente.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "dipendente.html"));
+});
+
+app.get("/login.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "login.html"));
+});
+
 // MongoDB setup
 const uri = "mongodb+srv://Giorgia7:100602@servizi.pjgbb1q.mongodb.net/";
 const client = new MongoClient(uri);
@@ -117,6 +125,34 @@ app.get("/api/tickets-with-coda", async (req, res) => {
   } catch (err) {
     console.error("Errore fetch tickets:", err);
     res.status(500).json({ message: "Errore nel recupero dei ticket" });
+  }
+});
+
+// Serve next ticket for a specific sportello and remove it from DB
+app.delete("/api/tickets/next/:numero_sportello", async (req, res) => {
+  const numero_sportello = Number(req.params.numero_sportello);
+
+  try {
+    // Find the oldest (or first-in-queue) ticket for this sportello
+    const nextTicket = await db.collection("Utenti").findOne(
+      { numero_sportello },
+      { sort: { _id: 1 } } // earliest inserted
+    );
+
+    if (!nextTicket) {
+      return res.status(404).json({ message: "Nessun utente in attesa." });
+    }
+
+    // Remove that ticket
+    await db.collection("Utenti").deleteOne({ _id: nextTicket._id });
+
+    res.json({
+      message: "Utente servito e rimosso dalla coda.",
+      removedTicket: nextTicket
+    });
+  } catch (err) {
+    console.error("Errore eliminazione ticket:", err);
+    res.status(500).json({ error: "Errore del server." });
   }
 });
 

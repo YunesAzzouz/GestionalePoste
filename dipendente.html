@@ -45,90 +45,110 @@
   <script src="https://cdn.jsdelivr.net/npm/keycloak-js@23.0.3/dist/keycloak.min.js"></script>
 
   <script>
-    // Initialize Keycloak client
+    // === KEYCLOAK INIT ===
     const keycloak = new Keycloak({
       url: "http://localhost:8080",
       realm: "PosteApp",
       clientId: "poste-frontend"
     });
 
-    async function initKeycloak() {
+    // Run inside an async wrapper because of await usage
+    (async () => {
       try {
-        const authenticated = await keycloak.init({ onLoad: "check-sso" });
+        const authenticated = await keycloak.init({ onLoad: "login-required" });
         if (!authenticated) {
           window.location.href = "login.html";
           return;
         }
 
-        // Handle logout
+        // --- Get Sportello from token ---
+        const numeroSportello = Number(keycloak.tokenParsed?.Sportello);
+        console.log("Dipendente Sportello:", numeroSportello);
+
+        // --- Logout handler ---
         document.getElementById("logoutBtn").addEventListener("click", () => {
-          keycloak.logout({ redirectUri: "http://localhost:3000/utente.html" });
+          keycloak.logout({ redirectUri: "http://localhost:3000/login.html" });
         });
+
+        // === Queue Logic (MongoDB integrated) ===
+        const queueBody = document.getElementById("queueBody");
+        const currentInfo = document.getElementById("currentInfo");
+
+        async function aggiornaTabella() {
+          try {
+            const res = await fetch("http://localhost:3000/api/tickets-with-coda");
+            const allTickets = await res.json();
+
+            // Filter tickets for this Sportello
+            const queue = allTickets.filter(t => t.numero_Sportello === numeroSportello);
+            queueBody.innerHTML = "";
+
+            if (!numeroSportello) {
+              alert("Errore: Sportello non trovato nel token Keycloak.");
+              return;
+            } 
+
+
+            if (queue.length === 0) {
+              queueBody.innerHTML = "<tr><td colspan='3'>Nessun utente in attesa</td></tr>";
+              currentInfo.textContent = "Nessun utente";
+              return;
+            }
+
+            queue.forEach(u => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td>${u.id}</td>  <!-- instead of u.numero_ticket -->
+                <td>${u.nome_servizio || "N/A"}</td> <!-- instead of u.servizi -->
+                <td>${u.tempo_attesa_coda} min</td>
+
+              `;
+              queueBody.appendChild(tr);
+            });
+
+            // Display first in queue
+            const current = queue[0];
+            currentInfo.textContent = `Ticket ID ${current.id} - attesa stimata ${current.tempo_attesa_ticket} min`;
+
+          } catch (err) {
+            console.error("Errore aggiornamento tabella:", err);
+          }
+        }
+
+        // === "Passa al prossimo" ===
+        document.getElementById("nextBtn").addEventListener("click", async () => {
+          try {
+            const res = await fetch(`http://localhost:3000/api/tickets/next/${numeroSportello}`, { method: "DELETE" });
+            
+            if (res.status === 404) {
+              currentInfo.textContent = "Nessun utente in attesa.";
+              aggiornaTabella();
+              return;
+            }
+
+            const data = await res.json();
+            console.log("Ticket rimosso:", data.removedTicket);
+
+            aggiornaTabella();
+          } catch (err) {
+            console.error("Errore eliminazione utente:", err);
+          }
+        });
+
+        // === "Termina servizio" ===
+        document.getElementById("endBtn").addEventListener("click", () => {
+          currentInfo.textContent = "Servizio terminato.";
+        });
+
+        // === Initial load + periodic refresh ===
+        await aggiornaTabella();
+        setInterval(aggiornaTabella, 10000);
+
       } catch (err) {
         console.error("Errore inizializzazione Keycloak:", err);
         window.location.href = "login.html";
       }
-    }
-
-    initKeycloak();
-
-    // === Queue Logic (unchanged) ===
-    const queueBody = document.getElementById("queueBody");
-    const currentInfo = document.getElementById("currentInfo");
-    let currentUser = JSON.parse(localStorage.getItem("currentUser"));
-
-    const aggiornaTabella = () => {
-      let queue = JSON.parse(localStorage.getItem("queue") || "[]");
-      queueBody.innerHTML = "";
-
-      if (queue.length === 0) {
-        queueBody.innerHTML = "<tr><td colspan='3'>Nessun utente in attesa</td></tr>";
-        return;
-      }
-
-      queue.forEach(u => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${u.numero.toString().padStart(3, '0')}</td>
-          <td>${u.servizio}</td>
-          <td>${u.tempo}</td>
-        `;
-        queueBody.appendChild(tr);
-      });
-    };
-
-    const aggiornaStatus = () => {
-      if (currentUser) {
-        currentInfo.textContent = `Numero ${currentUser.numero.toString().padStart(3, '0')} - ${currentUser.servizio}`;
-      } else {
-        currentInfo.textContent = "Nessun utente";
-      }
-    };
-
-    document.getElementById("nextBtn").addEventListener("click", () => {
-      let queue = JSON.parse(localStorage.getItem("queue") || "[]");
-
-      if (queue.length === 0) {
-        currentInfo.textContent = "Nessun utente in attesa.";
-        return;
-      }
-
-      currentUser = queue.shift();
-      localStorage.setItem("queue", JSON.stringify(queue));
-      localStorage.setItem("currentUser", JSON.stringify(currentUser));
-
-      aggiornaStatus();
-      aggiornaTabella();
-    });
-
-    document.getElementById("endBtn").addEventListener("click", () => {
-      currentUser = null;
-      localStorage.removeItem("currentUser");
-      aggiornaStatus();
-    });
-
-    aggiornaTabella();
-    aggiornaStatus();
+    })();
   </script>
 </body>
 </html>
