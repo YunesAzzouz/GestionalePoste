@@ -6,16 +6,6 @@
   <title>Biglietteria Dinamica</title>
   <link rel="stylesheet" href="CSS/Utente.css" />
   <link rel="stylesheet" href="CSS/style.css" />
-  <style>
-    /* Just for demo */
-    .ticket-box {
-      border: 2px solid #333;
-      border-radius: 10px;
-      padding: 15px;
-      width: 300px;
-      background: #f8f8f8;
-    }
-  </style>
 </head>
 <body>
   <div class="navbar">
@@ -30,7 +20,7 @@
   <div class="container-biglietto">
     <div id="selezione-operazione">
       <h2>Seleziona l'Operazione</h2>
-      <select id="operazione-scelta" name="operazione">
+      <select id="operazione-scelta">
         <option value="">-- Seleziona un'operazione --</option>
         <option value="Pagamento bollette/bollettini">Pagamento bollette/bollettini</option>
         <option value="Invio pacchi/lettere">Invio pacchi/lettere</option>
@@ -46,59 +36,45 @@
         <option value="Richiesta passaporto">Richiesta passaporto</option>
       </select>
       <br /><br />
-
       <button class="btn-genera-biglietto"><strong>CREA BIGLIETTO</strong></button>
 
       <br /><br />
 
       <div id="biglietto-emesso" class="ticket-box" style="display:none;">
         <h3>IL TUO BIGLIETTO</h3>
-        <div class="dettaglio-biglietto">
-          <p><strong>Numero Ticket:</strong></p>
-          <span id="ticket-numero" class="ticket-output"></span>
-        </div>
-        <div class="dettaglio-biglietto">
-          <p><strong>Operazione:</strong></p>
-          <span id="ticket-operazione" class="ticket-output"></span>
-        </div>
-        <div class="dettaglio-biglietto">
-          <p><strong>Sportello di Riferimento:</strong></p>
-          <span id="ticket-sportello" class="ticket-output"></span>
-        </div>
+        <p><strong>Numero Ticket:</strong> <span id="ticket-numero"></span></p>
+        <p><strong>Operazione:</strong> <span id="ticket-operazione"></span></p>
+        <p><strong>Sportello di Riferimento:</strong> <span id="ticket-sportello"></span></p>
       </div>
     </div>
   </div>
 
   <h2>TEMPI DI ATTESA STIMATI</h2>
   <br />
-  <table class="tabella-attesa">
+  <table class="tabella-attesa" border="1">
     <thead>
-      <tr class="riga">
+      <tr>
         <th>Sportello</th>
         <th>Numero Ticket</th>
         <th>Tempo Rimanente</th>
       </tr>
     </thead>
     <tbody>
-      <tr class="riga">
-        <td>1</td>
-        <td>A001</td>
-        <td>5 min</td>
-      </tr>
-      <tr class="riga">
-        <td>2</td>
-        <td>B041</td>
-        <td>12 min</td>
-      </tr>
-      <tr class="riga">
-        <td>3</td>
-        <td>C015</td>
-        <td>2 min</td>
-      </tr>
+      <tr id="sportello-1"><td>1</td><td class="ticket-n">-</td><td class="tempo-rimanente">0 min</td></tr>
+      <tr id="sportello-2"><td>2</td><td class="ticket-n">-</td><td class="tempo-rimanente">0 min</td></tr>
+      <tr id="sportello-3"><td>3</td><td class="ticket-n">-</td><td class="tempo-rimanente">0 min</td></tr>
+      <tr id="sportello-4"><td>4</td><td class="ticket-n">-</td><td class="tempo-rimanente">0 min</td></tr>
+      <tr id="sportello-5"><td>5</td><td class="ticket-n">-</td><td class="tempo-rimanente">0 min</td></tr>
+      <tr id="sportello-6"><td>6</td><td class="ticket-n">-</td><td class="tempo-rimanente">0 min</td></tr>
+      <tr id="sportello-7"><td>7</td><td class="ticket-n">-</td><td class="tempo-rimanente">0 min</td></tr>
+      <tr id="sportello-8"><td>8</td><td class="ticket-n">-</td><td class="tempo-rimanente">0 min</td></tr>
+      <tr id="sportello-9"><td>9</td><td class="ticket-n">-</td><td class="tempo-rimanente">0 min</td></tr>
     </tbody>
   </table>
+
   <script src="https://cdn.jsdelivr.net/npm/keycloak-js@23.0.3/dist/keycloak.min.js"></script>
   <script src="scripts/keycloak.js"></script>
   <script src="scripts/ticket.js"></script>
+
 </body>
 </html>

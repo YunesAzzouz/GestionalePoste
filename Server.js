@@ -11,7 +11,6 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname)));
 
-// Default route
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "Utente.html"));
 });
@@ -21,92 +20,78 @@ const uri = "mongodb+srv://Giorgia7:100602@servizi.pjgbb1q.mongodb.net/";
 const client = new MongoClient(uri);
 let db;
 
-async function connectDB() {
-  try {
-    await client.connect();
-    db = client.db("GestionalePoste");
-    console.log("MongoDB connected");
-
-    // Ensure sportelli (Coda) exist with allowed services
-    const coda = db.collection("Coda");
-    const existing = await coda.find().toArray();
-    if (existing.length === 0) {
-      const sportelli = [
-        { numero_sportello: 1, tempo_totale: 0, servizi: ["Invio pacchi/lettere", "Deposito denaro", "Bonifico"] },
-        { numero_sportello: 2, tempo_totale: 0, servizi: ["Ritiro pensione", "Pagamento bollette/bollettini", "Ricarica Postepay"] },
-        { numero_sportello: 3, tempo_totale: 0, servizi: ["Apertura conto Poste", "Ricarica Postepay", "Pagamento bollo auto e moto"] },
-        { numero_sportello: 4, tempo_totale: 0, servizi: ["Richiesta passaporto", "Ricarica telefonica", "Deposito denaro"] },
-        { numero_sportello: 5, tempo_totale: 0, servizi: ["Ritiro denaro", "Pagamento bollo auto e moto", "Pagamento bollette/bollettini"] },
-        { numero_sportello: 6, tempo_totale: 0, servizi: ["Bonifico", "Ritiro pacchi/lettere", "Ricarica telefonica"] },
-        { numero_sportello: 7, tempo_totale: 0, servizi: ["Ritiro pacchi/lettere", "Invio pacchi/lettere", "Ricarica telefonica"] },
-        { numero_sportello: 8, tempo_totale: 0, servizi: ["Deposito denaro", "Ritiro denaro", "Richiesta passaporto"] },
-        { numero_sportello: 9, tempo_totale: 0, servizi: ["Pagamento bollo auto e moto", "Ricarica Postepay", "Apertura conto Poste"] }
-      ];
-      await coda.insertMany(sportelli);
-      console.log("9 sportelli (Coda) inizializzati con servizi");
-    }
-  } catch (err) {
-    console.error("MongoDB connection error:", err);
-  }
-}
-connectDB();
-
-// Add a new ticket (Utente)
+// Create a new ticket
 app.post("/api/ticket", async (req, res) => {
   try {
-    const { id, operazione, tempo_operazione } = req.body;
-    const coda = db.collection("Coda");
-    const utenti = db.collection("Utenti");
+    const { operazione } = req.body;
 
-    // Find sportelli that can handle this operation
-    const eligible = await coda.find({ servizi: operazione }).sort({ tempo_totale: 1 }).toArray();
-    if (eligible.length === 0) {
-      return res.status(400).json({ message: "Nessuno sportello disponibile per questa operazione" });
+    if (!operazione) {
+      return res.status(400).json({ message: "Operazione non fornita" });
     }
 
-    // Pick the sportello with smallest waiting time
+    const serviziCollection = db.collection("Servizi");
+    const codaCollection = db.collection("Coda");
+    const utentiCollection = db.collection("Utenti");
+
+    // Find the corresponding service (case-insensitive)
+    const servizio = await serviziCollection.findOne({
+      nome_servizio: { $regex: new RegExp(`^${operazione.trim()}$`, "i") }
+    });
+
+    if (!servizio) {
+      return res.status(400).json({ message: "Servizio non trovato" });
+    }
+
+    // Find eligible sportelli
+    const eligible = await codaCollection
+      .find({ servizi: { $in: [operazione] } })
+      .sort({ tempo_attesa: 1 })
+      .toArray();
+
+    if (!eligible || eligible.length === 0) {
+      return res.status(400).json({ message: "Nessuno sportello disponibile per questo servizio" });
+    }
+
+    // Choose the sportello with lowest tempo_attesa
     const best = eligible[0];
-    const sportelloId = best._id;
-    const oldTempoTotale = best.tempo_totale || 0;
-    const newTempoTotale = oldTempoTotale + tempo_operazione;
+    const sportelloNumero = best.numero_sportello || null;
+    const oldTempo = best.tempo_attesa || 0;
 
-    // Update sportello total waiting time
-    await coda.updateOne(
-      { _id: sportelloId },
-      { $set: { tempo_totale: newTempoTotale } }
-    );
-
-    // Insert ticket
+    // Create new ticket
     const now = new Date();
     const newTicket = {
-      id,
-      fk_coda: sportelloId,
-      tempo_attesa: oldTempoTotale,
-      Orario: now
+      fk_coda: best._id, // store ObjectId
+      tempo_attesa: oldTempo + servizio.tempo_medio,
+      orario: now
     };
-    const result = await utenti.insertOne(newTicket);
-    if (!result.acknowledged) throw new Error("Insert failed");
 
-    // Respond to frontend
+    const insertResult = await utentiCollection.insertOne(newTicket);
+
+    // Update sportello wait time
+    await codaCollection.updateOne(
+      { _id: best._id },
+      { $inc: { tempo_attesa: servizio.tempo_medio } }
+    );
+
     res.json({
-      message: "Ticket salvato con successo",
-      fk_coda: sportelloId,
-      tempo_attesa: oldTempoTotale,
+      message: "Ticket creato con successo",
+      numero_sportello: sportelloNumero,
+      tempo_attesa: oldTempo,
       orario: now
     });
 
   } catch (err) {
-    console.error("Errore salvataggio ticket:", err);
-    res.status(500).json({ message: "Errore nel salvataggio del ticket" });
+    console.error("Errore creazione ticket:", err);
+    res.status(500).json({ message: "Errore creazione ticket" });
   }
 });
 
-// Get all tickets with Coda info
+// 🟢 Get all tickets with their sportello + servizio info
 app.get("/api/tickets-with-coda", async (req, res) => {
   try {
     const utenti = db.collection("Utenti");
 
-    const tickets = await utenti.aggregate([
+    const result = await utenti.aggregate([
       {
         $lookup: {
           from: "Coda",
@@ -120,21 +105,34 @@ app.get("/api/tickets-with-coda", async (req, res) => {
         $project: {
           id: 1,
           tempo_attesa: 1,
-          Orario: 1,
+          orario: 1,
           numero_sportello: "$coda_info.numero_sportello",
-          coda_tempo_totale: "$coda_info.tempo_totale"
+          tempo_attesa_coda: "$coda_info.tempo_attesa"
         }
       },
-      { $sort: { Orario: 1 } }
+      { $sort: { orario: 1 } }
     ]).toArray();
 
-    res.json(tickets);
+    res.json(result);
   } catch (err) {
-    console.error("Errore fetching tickets with coda:", err);
+    console.error("Errore fetch tickets:", err);
     res.status(500).json({ message: "Errore nel recupero dei ticket" });
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
+async function startServer() {
+  try {
+    await client.connect();
+    db = client.db("GestionalePoste");
+    console.log("MongoDB connected");
+
+    // Start the server only after DB is connected
+    app.listen(port, () => {
+      console.log(`Server running at http://localhost:${port}`);
+    });
+  } catch (err) {
+    console.error("MongoDB connection error:", err);
+  }
+}
+
+startServer();
