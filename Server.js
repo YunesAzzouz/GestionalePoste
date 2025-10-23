@@ -15,12 +15,11 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "Utente.html"));
 });
 
-// MongoDB setup
 const uri = "mongodb+srv://Giorgia7:100602@servizi.pjgbb1q.mongodb.net/";
 const client = new MongoClient(uri);
 let db;
 
-// Create a new ticket
+// Creazione ticket
 app.post("/api/ticket", async (req, res) => {
   try {
     const { operazione } = req.body;
@@ -33,7 +32,6 @@ app.post("/api/ticket", async (req, res) => {
     const codaCollection = db.collection("Coda");
     const utentiCollection = db.collection("Utenti");
 
-    // Find the corresponding service (case-insensitive)
     const servizio = await serviziCollection.findOne({
       nome_servizio: { $regex: new RegExp(`^${operazione.trim()}$`, "i") }
     });
@@ -42,7 +40,6 @@ app.post("/api/ticket", async (req, res) => {
       return res.status(400).json({ message: "Servizio non trovato" });
     }
 
-    // Find eligible sportelli
     const eligible = await codaCollection
       .find({ servizi: { $in: [operazione] } })
       .sort({ tempo_attesa: 1 })
@@ -52,12 +49,10 @@ app.post("/api/ticket", async (req, res) => {
       return res.status(400).json({ message: "Nessuno sportello disponibile per questo servizio" });
     }
 
-    // Choose the sportello with lowest tempo_attesa
     const best = eligible[0];
     const sportelloNumero = best.numero_sportello || null;
     const oldTempo = best.tempo_attesa || 0;
 
-    // Create new ticket
     const now = new Date();
     const newTicket = {
       fk_coda: best._id, // store ObjectId
@@ -67,7 +62,6 @@ app.post("/api/ticket", async (req, res) => {
 
     const insertResult = await utentiCollection.insertOne(newTicket);
 
-    // Update sportello wait time
     await codaCollection.updateOne(
       { _id: best._id },
       { $inc: { tempo_attesa: servizio.tempo_medio } }
@@ -86,7 +80,6 @@ app.post("/api/ticket", async (req, res) => {
   }
 });
 
-// 🟢 Get all tickets with their sportello + servizio info
 app.get("/api/tickets-with-coda", async (req, res) => {
   try {
     const utenti = db.collection("Utenti");
@@ -103,7 +96,7 @@ app.get("/api/tickets-with-coda", async (req, res) => {
       { $unwind: "$coda_info" },
       {
         $project: {
-          id: { $toString: "$_id" }, // readable ticket id
+          id: { $toString: "$_id" }, 
           tempo_attesa_ticket: "$tempo_attesa",
           orario: 1,
           numero_sportello: "$coda_info.numero_sportello",
@@ -126,7 +119,6 @@ async function startServer() {
     db = client.db("GestionalePoste");
     console.log("MongoDB connected");
 
-    // Start the server only after DB is connected
     app.listen(port, () => {
       console.log(`Server running at http://localhost:${port}`);
     });

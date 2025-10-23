@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  back-end:
+    build: .
+    container_name: gestionale-poste
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=${mongodb+srv://Giorgia7:100602@servizi.pjgbb1q.mongodb.net/}
+    restart: unless-stopped

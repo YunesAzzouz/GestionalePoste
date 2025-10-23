@@ -22,7 +22,6 @@ document.addEventListener("DOMContentLoaded", () => {
     "Richiesta passaporto": { prefix: "N", time: 22 }
   };
 
-  // Initialize counters in localStorage
   for (const key in operazioniMap) {
     const prefix = operazioniMap[key].prefix;
     if (!localStorage.getItem(`counter_${prefix}`)) localStorage.setItem(`counter_${prefix}`, '0');
@@ -50,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ticketSportello.textContent = `Sportello ${data.numero_sportello} (Attesa stimata: ${data.tempo_attesa} min)`;
       ticketBox.style.display = 'block';
 
-      updateAttesaTable(); // refresh table immediately
+      updateAttesaTable(); 
     } catch (err) {
       console.error("Errore:", err);
       alert("Errore durante la creazione del biglietto");
@@ -62,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const res = await fetch("http://localhost:3000/api/tickets-with-coda");
     const tickets = await res.json();
 
-    // Group tickets by sportello number
+
     const grouped = {};
     tickets.forEach(ticket => {
       const sportello = Number(ticket.numero_sportello);
@@ -89,7 +88,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 }
 
-// Initial call + periodic refresh
 updateAttesaTable();
 setInterval(updateAttesaTable, 10000);
 });
