@@ -15,7 +15,6 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "Utente.html"));
 });
 
-<<<<<<< HEAD
 app.get("/dipendente.html", (req, res) => {
   res.sendFile(path.join(__dirname, "dipendente.html"));
 });
@@ -25,8 +24,6 @@ app.get("/login.html", (req, res) => {
 });
 
 // MongoDB setup
-=======
->>>>>>> 3f57e8bfca244b852d40eaf56312d0b83b7e5d1e
 const uri = "mongodb+srv://Giorgia7:100602@servizi.pjgbb1q.mongodb.net/";
 const client = new MongoClient(uri);
 let db;
