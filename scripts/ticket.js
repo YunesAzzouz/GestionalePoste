@@ -58,45 +58,34 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   async function updateAttesaTable() {
-    try {
-      const res = await fetch("http://localhost:3000/api/tickets-with-coda");
-      const tickets = await res.json();
+  try {
+    const res = await fetch("http://localhost:3000/api/tickets-with-coda");
+    const tickets = await res.json();
 
-      // Group tickets by sportello
-      const grouped = {};
-      tickets.forEach(ticket => {
-        const s = ticket.numero_sportello;
-        if (!grouped[s]) grouped[s] = [];
-        grouped[s].push(ticket);
-      });
+    // Group tickets by sportello number
+    const grouped = {};
+    tickets.forEach(ticket => {
+      const sportello = Number(ticket.numero_sportello);
+      if (!grouped[sportello]) grouped[sportello] = [];
+      grouped[sportello].push(ticket);
+    });
 
-      // Update table rows
-      for (let i = 1; i <= 9; i++) {
-        const row = document.getElementById(`sportello-${i}`);
-        console.log(tickets.map(t => t.numero_sportello));
-        if (!row) continue;
+    for (let i = 1; i <= 9; i++) {
+      const row = document.getElementById(`sportello-${i}`);
+      if (!row) continue;
 
-        const ticketCell = row.querySelector(".ticket-n");
-        const tempoCell = row.querySelector(".tempo-rimanente");
+      const tempoCell = row.querySelector(".tempo-rimanente");
+      const sportelloTickets = grouped[i] || [];
 
-        const ticketsForSportello = grouped[i] || [];
-        if (ticketsForSportello.length === 0) {
-          ticketCell.textContent = "-";
-          tempoCell.textContent = "0 min";
-        } else {
-          const firstTicket = ticketsForSportello[0];
-          ticketCell.textContent = firstTicket.id;
-
-          const now = new Date();
-          const ticketTime = new Date(firstTicket.orario);
-          const minutesPassed = Math.floor((now - ticketTime) / 60000);
-
-          const remaining = Math.max(firstTicket.tempo_attesa - minutesPassed, 0);
-          tempoCell.textContent = remaining + " min";
-        }
+      if (sportelloTickets.length === 0) {
+        tempoCell.textContent = "0 min";
+      } else {
+        const firstTicket = sportelloTickets[0];
+        tempoCell.textContent = `${firstTicket.tempo_attesa_coda} min`;
       }
-    } catch (err) {
-      console.error("Errore aggiornamento tabella attesa:", err);
+    }
+  } catch (err) {
+    console.error("Errore aggiornamento tabella attesa:", err);
   }
 }
 

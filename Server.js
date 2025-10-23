@@ -103,8 +103,8 @@ app.get("/api/tickets-with-coda", async (req, res) => {
       { $unwind: "$coda_info" },
       {
         $project: {
-          id: 1,
-          tempo_attesa: 1,
+          id: { $toString: "$_id" }, // readable ticket id
+          tempo_attesa_ticket: "$tempo_attesa",
           orario: 1,
           numero_sportello: "$coda_info.numero_sportello",
           tempo_attesa_coda: "$coda_info.tempo_attesa"
