@@ -9,8 +9,10 @@ services:
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KEYCLOAK_IMPORT=/opt/keycloak/data/import/realm-export.json 
     volumes:
       - keycloak_data:/opt/keycloak/data
+      - ./docker/key-cloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
 
   backend:
     build:
