@@ -27,13 +27,13 @@
         <tr>
           <th>Numero</th>
           <th>Servizio</th>
-          <th>Tempo Stimato (min)</th>
         </tr>
       </thead>
       <tbody id="queueBody">
-        <tr><td colspan="3">Nessun utente in attesa</td></tr>
+        <tr><td colspan="2">Nessun utente in attesa</td></tr>
       </tbody>
     </table>
+
 
     <div class="btn-container">
       <button id="nextBtn">Passa al prossimo</button>
@@ -67,7 +67,7 @@
 
         // --- Logout handler ---
         document.getElementById("logoutBtn").addEventListener("click", () => {
-          keycloak.logout({ redirectUri: "http://localhost:3000/login.html" });
+          keycloak.logout({ redirectUri: "http://localhost:3000/utente.html" });
         });
 
         // === Queue Logic (MongoDB integrated) ===
@@ -80,7 +80,7 @@
             const allTickets = await res.json();
 
             // Filter tickets for this Sportello
-            const queue = allTickets.filter(t => t.numero_Sportello === numeroSportello);
+            const queue = allTickets.filter(t => t.numero_sportello === numeroSportello);
             queueBody.innerHTML = "";
 
             if (!numeroSportello) {
@@ -96,19 +96,19 @@
             }
 
             queue.forEach(u => {
-              const tr = document.createElement("tr");
-              tr.innerHTML = `
-                <td>${u.id}</td>  <!-- instead of u.numero_ticket -->
-                <td>${u.nome_servizio || "N/A"}</td> <!-- instead of u.servizi -->
-                <td>${u.tempo_attesa_coda} min</td>
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${u.numero_ticket || "?"}</td>
+              <td>${u.nome_servizio || "N/A"}</td>
+            `;
+            queueBody.appendChild(tr);
+          });
 
-              `;
-              queueBody.appendChild(tr);
-            });
 
             // Display first in queue
             const current = queue[0];
-            currentInfo.textContent = `Ticket ID ${current.id} - attesa stimata ${current.tempo_attesa_ticket} min`;
+            currentInfo.textContent = `Ticket ${current.numero_ticket}`;
+
 
           } catch (err) {
             console.error("Errore aggiornamento tabella:", err);

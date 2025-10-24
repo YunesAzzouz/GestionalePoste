@@ -31,7 +31,7 @@ let db;
 // Creazione ticket
 app.post("/api/ticket", async (req, res) => {
   try {
-    const { operazione } = req.body;
+    const { operazione, id } = req.body;
 
     if (!operazione) {
       return res.status(400).json({ message: "Operazione non fornita" });
@@ -64,10 +64,14 @@ app.post("/api/ticket", async (req, res) => {
 
     const now = new Date();
     const newTicket = {
-      fk_coda: best._id, // store ObjectId
+      fk_coda: best._id,
+      numero_ticket: id,
+      numero_sportello: sportelloNumero,  // store the sportello here
       tempo_attesa: oldTempo + servizio.tempo_medio,
       orario: now
     };
+
+
 
     const insertResult = await utentiCollection.insertOne(newTicket);
 
@@ -94,26 +98,37 @@ app.get("/api/tickets-with-coda", async (req, res) => {
     const utenti = db.collection("Utenti");
 
     const result = await utenti.aggregate([
-      {
-        $lookup: {
-          from: "Coda",
-          localField: "fk_coda",
-          foreignField: "_id",
-          as: "coda_info"
-        }
-      },
-      { $unwind: "$coda_info" },
-      {
-        $project: {
-          id: { $toString: "$_id" }, 
-          tempo_attesa_ticket: "$tempo_attesa",
-          orario: 1,
-          numero_sportello: "$coda_info.numero_sportello",
-          tempo_attesa_coda: "$coda_info.tempo_attesa"
-        }
-      },
-      { $sort: { orario: 1 } }
-    ]).toArray();
+  {
+    $lookup: {
+      from: "Coda",
+      localField: "fk_coda",
+      foreignField: "_id",
+      as: "coda_info"
+    }
+  },
+  { $unwind: "$coda_info" },
+  {
+    $lookup: {
+      from: "Servizi",
+      localField: "coda_info.servizi",
+      foreignField: "nome_servizio",
+      as: "servizio_info"
+    }
+  },
+  {
+    $project: {
+    id: { $toString: "$_id" },
+    numero_ticket: 1,
+    orario: 1,
+    numero_sportello: "$coda_info.numero_sportello",
+    tempo_attesa_coda: "$coda_info.tempo_attesa",
+    nome_servizio: { $arrayElemAt: ["$servizio_info.nome_servizio", 0] }
+  }
+
+  },
+  { $sort: { orario: 1 } }
+]).toArray();
+
 
     res.json(result);
   } catch (err) {
@@ -127,18 +142,43 @@ app.delete("/api/tickets/next/:numero_sportello", async (req, res) => {
   const numero_sportello = Number(req.params.numero_sportello);
 
   try {
-    // Find the oldest (or first-in-queue) ticket for this sportello
-    const nextTicket = await db.collection("Utenti").findOne(
+    console.log("→ DELETE request received for sportello:", numero_sportello);
+    const utentiCollection = db.collection("Utenti");
+    const codaCollection = db.collection("Coda");
+    const serviziCollection = db.collection("Servizi");
+
+    // Find the oldest (first) ticket for this sportello
+    const nextTicket = await utentiCollection.findOne(
       { numero_sportello },
-      { sort: { _id: 1 } } // earliest inserted
+      { sort: { _id: 1 } }
     );
+
+    console.log("Found nextTicket:", nextTicket);
 
     if (!nextTicket) {
       return res.status(404).json({ message: "Nessun utente in attesa." });
     }
 
+    // Fetch related coda document
+    const coda = await codaCollection.findOne({ numero_sportello });
+    console.log("Found coda:", coda);
+    if (coda) {
+      // Find one of the services this sportello serves
+      const servizio = await serviziCollection.findOne({
+        nome_servizio: { $in: coda.servizi }
+      });
+      console.log("Found servizio:", servizio);
+
+      // Decrement tempo_attesa safely
+      const decrement = servizio?.tempo_medio || 0;
+      await codaCollection.updateOne(
+        { _id: coda._id },
+        { $inc: { tempo_attesa: -decrement } }
+      );
+    }
+
     // Remove that ticket
-    await db.collection("Utenti").deleteOne({ _id: nextTicket._id });
+    await utentiCollection.deleteOne({ _id: nextTicket._id });
 
     res.json({
       message: "Utente servito e rimosso dalla coda.",
