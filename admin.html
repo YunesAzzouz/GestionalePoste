@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="CSS/admin.css">
   <link rel="stylesheet" href="CSS/style.css">
 </head>
-
 <body>
   <div class="navbar">
     <img src="img/logo.png" alt="Logo Poste" class="logo" />
@@ -19,9 +18,9 @@
     <h2>Statistiche Clienti Serviti</h2>
 
     <div class="filter-bar">
-      <button> Giorno</button>
-      <button> Settimana</button>
-      <button> Mese</button>
+      <button id="filter-day">Giorno</button>
+      <button id="filter-week">Settimana</button>
+      <button id="filter-month">Mese</button>
     </div>
 
     <!-- Statistica 1 -->
@@ -35,12 +34,8 @@
               <th>Numero Clienti</th>
             </tr>
           </thead>
-          <tbody>
-            <tr><td>Pagamento bollette</td><td>42</td></tr>
-            <tr><td>Ritiro pacchi</td><td>28</td></tr>
-            <tr><td>Bonifico</td><td>16</td></tr>
-            <tr><td>Ricarica Postepay</td><td>24</td></tr>
-            <tr><td>Richiesta passaporto</td><td>8</td></tr>
+          <tbody id="servicesTable">
+            <tr><td colspan="2">Caricamento...</td></tr>
           </tbody>
         </table>
       </div>
@@ -58,17 +53,16 @@
               <th>Clienti Serviti</th>
             </tr>
           </thead>
-          <tbody>
-            <tr><td>Sportello 1</td><td>Pagamento bollette</td><td>15</td></tr>
-            <tr><td>Sportello 1</td><td>Bonifico</td><td>5</td></tr>
-            <tr><td>Sportello 2</td><td>Ritiro pacchi</td><td>12</td></tr>
-            <tr><td>Sportello 2</td><td>Ricarica Postepay</td><td>7</td></tr>
-            <tr><td>Sportello 3</td><td>Richiesta passaporto</td><td>8</td></tr>
-            <tr><td>Sportello 3</td><td>Bonifico</td><td>11</td></tr>
+          <tbody id="sportelliTable">
+            <tr><td colspan="3">Caricamento...</td></tr>
           </tbody>
         </table>
       </div>
     </section>
   </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/keycloak-js@23.0.3/dist/keycloak.min.js"></script>
+  <script src="scripts/keycloak.js"></script>
+  <script src="scripts/admin.js"></script>
 </body>
 </html>

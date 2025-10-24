@@ -28,60 +28,64 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   btnGenera.addEventListener('click', async () => {
-    const operazione = selectOperazione.value;
-    if (!operazione) return alert("Seleziona un'operazione prima di creare il biglietto!");
+  const operazione = selectOperazione.value;
+  if (!operazione) return alert("Seleziona un'operazione prima di creare il biglietto!");
 
-    const { prefix, time } = operazioniMap[operazione];
-    let counter = parseInt(localStorage.getItem(`counter_${prefix}`)) + 1;
-    localStorage.setItem(`counter_${prefix}`, counter.toString());
-    const ticketNumber = `${prefix}${String(counter).padStart(3, '0')}`;
+  const { prefix, time } = operazioniMap[operazione];
+  let counter = parseInt(localStorage.getItem(`counter_${prefix}`)) + 1;
+  localStorage.setItem(`counter_${prefix}`, counter.toString());
+  const ticketNumber = `${prefix}${String(counter).padStart(3, '0')}`;
 
-    try {
-      const res = await fetch("http://localhost:3000/api/ticket", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ operazione, id: ticketNumber, tempo_operazione: time })
-      });
-      const data = await res.json();
+  try {
+    const res = await fetch("http://localhost:3000/api/ticket", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        operazione,
+        id: ticketNumber,
+        tempo_operazione: time,
+        fk_servizio: operazione
+      })
+    });
 
-      ticketNumero.textContent = ticketNumber;
-      ticketOperazione.textContent = operazione;
-      ticketSportello.textContent = `Sportello ${data.numero_sportello} (Attesa stimata: ${data.tempo_attesa} min)`;
-      ticketBox.style.display = 'block';
+    const data = await res.json();
 
-      updateAttesaTable(); 
-    } catch (err) {
-      console.error("Errore:", err);
-      alert("Errore durante la creazione del biglietto");
-    }
-  });
+    // --- NEW: fetch all tickets to recalc estimated wait ---
+    const ticketsRes = await fetch("http://localhost:3000/api/tickets-with-coda");
+    const allTickets = await ticketsRes.json();
+    const ticketsForSportello = allTickets.filter(t => t.numero_sportello === data.numero_sportello);
 
-  async function updateAttesaTable() {
+    const estimatedWait = ticketsForSportello.reduce((sum, t) => sum + (t.tempo_medio || 0), 0);
+
+    ticketNumero.textContent = ticketNumber;
+    ticketOperazione.textContent = operazione;
+    ticketSportello.textContent = `Sportello ${data.numero_sportello} (Attesa stimata: ${estimatedWait} min)`;
+    ticketBox.style.display = 'block';
+
+    updateAttesaTable(); 
+  } catch (err) {
+    console.error("Errore:", err);
+    alert("Errore durante la creazione del biglietto");
+  }
+});
+
+async function updateAttesaTable() {
   try {
     const res = await fetch("http://localhost:3000/api/tickets-with-coda");
-    const tickets = await res.json();
-
-
-    const grouped = {};
-    tickets.forEach(ticket => {
-      const sportello = Number(ticket.numero_sportello);
-      if (!grouped[sportello]) grouped[sportello] = [];
-      grouped[sportello].push(ticket);
-    });
+    const allTickets = await res.json();
 
     for (let i = 1; i <= 9; i++) {
       const row = document.getElementById(`sportello-${i}`);
       if (!row) continue;
-
       const tempoCell = row.querySelector(".tempo-rimanente");
-      const sportelloTickets = grouped[i] || [];
 
-      if (sportelloTickets.length === 0) {
-        tempoCell.textContent = "0 min";
-      } else {
-        const firstTicket = sportelloTickets[0];
-        tempoCell.textContent = `${firstTicket.tempo_attesa_coda} min`;
-      }
+      // Filter tickets for this sportello
+      const ticketsForSportello = allTickets.filter(t => t.numero_sportello === i);
+
+      // Sum estimated service times of pending tickets
+      const totalTime = ticketsForSportello.reduce((sum, t) => sum + (t.tempo_medio || 0), 0);
+
+      tempoCell.textContent = `${totalTime} min`;
     }
   } catch (err) {
     console.error("Errore aggiornamento tabella attesa:", err);

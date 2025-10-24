@@ -12,12 +12,10 @@
   <div class="navbar">
     <img src="img/logo.png" class="logo" alt="Logo Poste"/>
     <h1><strong>Pannello Dipendente</strong></h1>
-    <button id="logoutBtn" class="btn-login">Logout</button>
+    <button id="logoutBtn" class="btn-logout">Logout</button>
   </div>
 
   <main>
-    <h1>Pannello Dipendente</h1>
-
     <div id="currentBox">
       <h2>Attualmente stai servendo: <span id="currentInfo">Nessun utente</span></h2>
     </div>
@@ -34,121 +32,16 @@
       </tbody>
     </table>
 
-
     <div class="btn-container">
       <button id="nextBtn">Passa al prossimo</button>
       <button id="endBtn">Termina servizio</button>
     </div>
   </main>
 
-  <!-- Keycloak JS -->
+  <!-- Keycloak -->
   <script src="https://cdn.jsdelivr.net/npm/keycloak-js@23.0.3/dist/keycloak.min.js"></script>
+  <script src="scripts/keycloak.js"></script>
+  <script src="scripts/dipendente.js"></script>
 
-  <script>
-    // === KEYCLOAK INIT ===
-    const keycloak = new Keycloak({
-      url: "http://localhost:8080",
-      realm: "PosteApp",
-      clientId: "poste-frontend"
-    });
-
-    // Run inside an async wrapper because of await usage
-    (async () => {
-      try {
-        const authenticated = await keycloak.init({ onLoad: "login-required" });
-        if (!authenticated) {
-          window.location.href = "login.html";
-          return;
-        }
-
-        // --- Get Sportello from token ---
-        const numeroSportello = Number(keycloak.tokenParsed?.Sportello);
-        console.log("Dipendente Sportello:", numeroSportello);
-
-        // --- Logout handler ---
-        document.getElementById("logoutBtn").addEventListener("click", () => {
-          keycloak.logout({ redirectUri: "http://localhost:3000/utente.html" });
-        });
-
-        // === Queue Logic (MongoDB integrated) ===
-        const queueBody = document.getElementById("queueBody");
-        const currentInfo = document.getElementById("currentInfo");
-
-        async function aggiornaTabella() {
-          try {
-            const res = await fetch("http://localhost:3000/api/tickets-with-coda");
-            const allTickets = await res.json();
-
-            // Filter tickets for this Sportello
-            const queue = allTickets.filter(t => t.numero_sportello === numeroSportello);
-            queueBody.innerHTML = "";
-
-            if (!numeroSportello) {
-              alert("Errore: Sportello non trovato nel token Keycloak.");
-              return;
-            } 
-
-
-            if (queue.length === 0) {
-              queueBody.innerHTML = "<tr><td colspan='3'>Nessun utente in attesa</td></tr>";
-              currentInfo.textContent = "Nessun utente";
-              return;
-            }
-
-            queue.forEach(u => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td>${u.numero_ticket || "?"}</td>
-              <td>${u.nome_servizio || "N/A"}</td>
-            `;
-            queueBody.appendChild(tr);
-          });
-
-
-            // Display first in queue
-            const current = queue[0];
-            currentInfo.textContent = `Ticket ${current.numero_ticket}`;
-
-
-          } catch (err) {
-            console.error("Errore aggiornamento tabella:", err);
-          }
-        }
-
-        // === "Passa al prossimo" ===
-        document.getElementById("nextBtn").addEventListener("click", async () => {
-          try {
-            const res = await fetch(`http://localhost:3000/api/tickets/next/${numeroSportello}`, { method: "DELETE" });
-            
-            if (res.status === 404) {
-              currentInfo.textContent = "Nessun utente in attesa.";
-              aggiornaTabella();
-              return;
-            }
-
-            const data = await res.json();
-            console.log("Ticket rimosso:", data.removedTicket);
-
-            aggiornaTabella();
-          } catch (err) {
-            console.error("Errore eliminazione utente:", err);
-          }
-        });
-
-        // === "Termina servizio" ===
-        document.getElementById("endBtn").addEventListener("click", () => {
-          currentInfo.textContent = "Servizio terminato.";
-        });
-
-        // === Initial load + periodic refresh ===
-        await aggiornaTabella();
-        setInterval(aggiornaTabella, 10000);
-
-      } catch (err) {
-        console.error("Errore inizializzazione Keycloak:", err);
-        window.location.href = "login.html";
-      }
-    })();
-  </script>
 </body>
 </html>

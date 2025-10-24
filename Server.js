@@ -66,11 +66,11 @@ app.post("/api/ticket", async (req, res) => {
     const newTicket = {
       fk_coda: best._id,
       numero_ticket: id,
-      numero_sportello: sportelloNumero,  // store the sportello here
+      numero_sportello: sportelloNumero,
       tempo_attesa: oldTempo + servizio.tempo_medio,
-      orario: now
+      orario: now,
+      fk_servizio: operazione  // ← Add this field
     };
-
 
 
     const insertResult = await utentiCollection.insertOne(newTicket);
@@ -116,13 +116,15 @@ app.get("/api/tickets-with-coda", async (req, res) => {
     }
   },
   {
-    $project: {
+  $project: {
     id: { $toString: "$_id" },
     numero_ticket: 1,
     orario: 1,
     numero_sportello: "$coda_info.numero_sportello",
     tempo_attesa_coda: "$coda_info.tempo_attesa",
-    nome_servizio: { $arrayElemAt: ["$servizio_info.nome_servizio", 0] }
+    nome_servizio: { $arrayElemAt: ["$servizio_info.nome_servizio", 0] },
+    fk_servizio: "$fk_servizio",
+    tempo_medio: { $arrayElemAt: ["$servizio_info.tempo_medio", 0] }
   }
 
   },
@@ -187,6 +189,96 @@ app.delete("/api/tickets/next/:numero_sportello", async (req, res) => {
   } catch (err) {
     console.error("Errore eliminazione ticket:", err);
     res.status(500).json({ error: "Errore del server." });
+  }
+});
+
+app.get("/api/coda", async (req, res) => {
+  try {
+    const codaCollection = db.collection("Coda");
+    const codaList = await codaCollection.find().toArray();
+    res.json(codaList.map(c => ({
+      numero_sportello: c.numero_sportello,
+      tempo_attesa: c.tempo_attesa || 0
+    })));
+  } catch (err) {
+    console.error("Errore fetch coda:", err);
+    res.status(500).json({ message: "Errore nel recupero della coda" });
+  }
+});
+
+// Statistica 1: Clienti serviti per ogni servizio
+function getDateRange(range) {
+  const now = new Date();
+  let start;
+
+  switch (range) {
+    case "day":
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      break;
+    case "week":
+      const day = now.getDay(); // 0 = Sunday
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
+      break;
+    case "month":
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      break;
+    default:
+      start = new Date(0); // all time
+  }
+
+  return start;
+}
+
+// Statistica 1: Clienti serviti per ogni servizio (Admin)
+app.get("/api/stats/services", async (req, res) => {
+  try {
+    const range = req.query.range || "all";
+    const startDate = getDateRange(range);
+
+    const utenti = db.collection("Utenti");
+    const stats = await utenti.aggregate([
+      { $match: { orario: { $gte: startDate } } }, // filter by range
+      {
+        $group: {
+          _id: "$fk_servizio",       // <- count directly by ticket's service
+          clientiServiti: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]).toArray();
+
+    res.json(stats);
+  } catch (err) {
+    console.error("Errore stats servizi:", err);
+    res.status(500).json({ message: "Errore nel recupero statistiche" });
+  }
+});
+
+// Statistica 2: Clienti serviti per sportello e tipo di servizio (Admin)
+app.get("/api/stats/sportelli", async (req, res) => {
+  try {
+    const range = req.query.range || "all";
+    const startDate = getDateRange(range);
+
+    const utenti = db.collection("Utenti");
+    const stats = await utenti.aggregate([
+      { $match: { orario: { $gte: startDate } } },
+      {
+        $group: {
+          _id: {
+            sportello: "$numero_sportello",  // <- sportello from ticket
+            servizio: "$fk_servizio"         // <- actual service requested
+          },
+          clientiServiti: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.sportello": 1, "_id.servizio": 1 } }
+    ]).toArray();
+
+    res.json(stats);
+  } catch (err) {
+    console.error("Errore stats sportelli:", err);
+    res.status(500).json({ message: "Errore nel recupero statistiche" });
   }
 });
 
