@@ -24,7 +24,7 @@ app.get("/login.html", (req, res) => {
 });
 
 // MongoDB setup
-const uri = "mongodb+srv://Giorgia7:100602@servizi.pjgbb1q.mongodb.net/";
+const uri = process.env.MONGODB_URI || "mongodb+srv://Giorgia7:100602@servizi.pjgbb1q.mongodb.net/";
 const client = new MongoClient(uri);
 let db;
 
