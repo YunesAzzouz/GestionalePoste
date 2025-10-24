@@ -1,35 +1,54 @@
-version: "3.8"
+version: '3.8'
 
 services:
+  # --------------------
+  # SERVIZIO KEYCLOAK
+  # --------------------
   keycloak:
-    build: ./docker/key-cloak
+    # Costruisce l'immagine Keycloak dal Dockerfile nella cartella specificata
+    build:
+      context: ./docker/key-cloak
+      dockerfile: Dockerfile
     container_name: keycloak
+    # Mappa la porta 8080 del container alla porta 8080 dell'host
     ports:
       - "8080:8080"
     environment:
-      - KEYCLOAK_ADMIN=admin
-      - KEYCLOAK_ADMIN_PASSWORD=admin
-      - KEYCLOAK_IMPORT=/opt/keycloak/data/import/realm-export.json 
-    volumes:
-      - keycloak_data:/opt/keycloak/data
-      - ./docker/key-cloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: dev-file # Usa il DB file interno per Keycloak
+    networks:
+      - posteapp_network
 
+  # --------------------
+  # SERVIZIO BACKEND (Node.js/Express)
+  # --------------------
   backend:
+    # Costruisce l'immagine backend dal Dockerfile nella root
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: gestionale-poste
+    container_name: poste_backend
+    # Mappa la porta 3000 del container alla porta 3000 dell'host
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production
-      - MONGODB_URI=${mongodb+srv://Giorgia7:100602@servizi.pjgbb1q.mongodb.net/}
-      - KEYCLOAK_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=poste-realm
-      - KEYCLOAK_CLIENT=poste-client
+      # URI per MongoDB Atlas (cloud)
+      MONGODB_URI: "mongodb+srv://Giorgia7:100602@servizi.pjgbb1q.mongodb.net/"
+      # URL interno di Keycloak (usa il nome del servizio Keycloak nella rete Docker)
+      KEYCLOAK_URL: http://keycloak:8080
+      # Nome del Realm (come in keycloak.js e realm-export.json)
+      KEYCLOAK_REALM: PosteApp
+      # Client ID (come in keycloak.js e realm-export.json)
+      KEYCLOAK_CLIENT: poste-frontend
+      NODE_ENV: production
+    networks:
+      - posteapp_network
+    # Il backend dipende dal servizio Keycloak
     depends_on:
       - keycloak
-    restart: unless-stopped
 
-volumes:
-  keycloak_data:
+# Definizione della rete
+networks:
+  posteapp_network:
+    driver: bridge

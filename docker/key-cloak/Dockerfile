@@ -1,11 +1,24 @@
-FROM quay.io/keycloak/keycloak:25.0.6
+# Usa l'immagine ufficiale di Keycloak
+FROM quay.io/keycloak/keycloak:latest
 
-ENV KC_HEALTH_ENABLED=true
-ENV KC_METRICS_ENABLED=true
-ENV KC_HTTP_PORT=8080
+# Crea una directory temporanea per l'importazione
+USER root
+RUN mkdir -p /opt/keycloak/data/import
 
-# Copia il realm da questa cartella
-COPY realm-export.json /opt/keycloak/data/import/realm-export.json
+# Copia il file di esportazione del realm
+COPY realm-export.json /opt/keycloak/data/import/
 
-RUN /opt/keycloak/bin/kc.sh build
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start-dev", "--import-realm"]
+# Imposta le variabili d'ambiente
+ENV KC_DB=dev-file
+ENV KC_HTTP_ENABLED=true
+ENV KC_LOG_LEVEL=INFO
+
+# Variabile d'ambiente per l'utente amministratore iniziale di Keycloak
+ENV KEYCLOAK_ADMIN=admin
+ENV KEYCLOAK_ADMIN_PASSWORD=admin
+
+# AGGIUNTA DI --hostname-strict=false come richiesto dal log di errore
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "start", "--import-realm", "--hostname-strict=false"]
+
+# Espone la porta di default di Keycloak
+EXPOSE 8080
