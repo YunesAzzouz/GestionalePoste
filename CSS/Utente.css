@@ -50,16 +50,6 @@ h3 {
     gap: 15px;
 }
 
-.ticket-box {
-    width: 100%;
-    max-width: 300px;
-    margin: 0 auto 40px auto;
-    padding: 25px;
-    border-radius: 6px;
-    background-color:var(--color-yellow-accent);
-    border: 1px solid var(--color-border-light);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-}
 
 .dettaglio-biglietto{
     display:flex;
