@@ -1,46 +1,54 @@
-const keycloak = new Keycloak({
-  url: "http://localhost:8080",
-  realm: "PosteApp",
-  clientId: "poste-frontend"
-});
+document.addEventListener("DOMContentLoaded", async () => {
+  window.keycloak = new Keycloak({
+    url: "http://localhost:8080",
+    realm: "PosteApp",
+    clientId: "poste-frontend"
+  });
 
-document.addEventListener("DOMContentLoaded", () => {
-  const btnLogin = document.querySelector('.btn-login');
-  const btnLogout = document.querySelector('.btn-logout');
+  try {
+    await keycloak.init({ onLoad: "check-sso", checkLoginIframe: false });
 
-  // Initialize Keycloak
-  keycloak.init({ onLoad: 'check-sso' }).then(authenticated => {
+    // Global user info
+    window.userType = keycloak.tokenParsed?.userType;
 
-    if (authenticated) {
-      // User is logged in
-      btnLogin.style.display = 'none';
-      btnLogout.style.display = 'inline-block';
-
-      // Redirect automatically if you are on utente.html
-      if (window.location.pathname.endsWith('/utente.html')) {
-        window.location.href = 'dipendente.html';
+    // Only dipendenti have a sportello
+    if (window.userType === "dipendente") {
+      window.numeroSportello = Number(keycloak.tokenParsed?.Sportello);
+      if (!window.numeroSportello) {
+        alert("Errore: Sportello non trovato nel token Keycloak.");
       }
+    }
 
-      // Logout button listener
-      btnLogout.addEventListener('click', () => {
-        keycloak.logout({
-          redirectUri: window.location.origin + '/utente.html'
-        });
-      });
+    const btnLogin = document.querySelector(".btn-login");
+    const btnLogout = document.querySelector(".btn-logout");
 
+    if (window.userType) {
+      if (btnLogout) btnLogout.style.display = "inline-block";
+      if (btnLogin) btnLogin.style.display = "none";
+
+      const currentPage = window.location.pathname.split("/").pop();
+      if (currentPage === "utente.html") {
+        if (window.userType === "dipendente") window.location.href = "dipendente.html";
+        if (window.userType === "admin") window.location.href = "admin.html";
+      }
     } else {
-      // User not logged in
-      btnLogin.style.display = 'inline-block';
-      btnLogout.style.display = 'none';
+      if (btnLogin) btnLogin.style.display = "inline-block";
+      if (btnLogout) btnLogout.style.display = "none";
+    }
 
-      btnLogin.addEventListener('click', () => {
-        keycloak.login({
-          redirectUri: window.location.origin + '/dipendente.html'
-        });
+    if (btnLogin) {
+      btnLogin.addEventListener("click", async () => {
+        await keycloak.login();
       });
     }
 
-  }).catch(err => {
-    console.error('Keycloak init failed', err);
-  });
+    if (btnLogout) {
+      btnLogout.addEventListener("click", () => {
+        keycloak.logout({ redirectUri: window.location.origin + "/utente.html" });
+      });
+    }
+
+  } catch (err) {
+    console.error("Keycloak init failed:", err);
+  }
 });
