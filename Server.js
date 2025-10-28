@@ -12,7 +12,7 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname)));
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "Utente.html"));
+  res.sendFile(path.join(__dirname, "utente.html"));
 });
 
 app.get("/dipendente.html", (req, res) => {
@@ -279,6 +279,17 @@ app.get("/api/stats/sportelli", async (req, res) => {
   } catch (err) {
     console.error("Errore stats sportelli:", err);
     res.status(500).json({ message: "Errore nel recupero statistiche" });
+  }
+});
+
+app.get("/api/utenteByEmail/:email", async (req, res) => {
+  try {
+    const utenti = db.collection("Utenti");
+    const user = await utenti.findOne({ email: req.params.email.trim() });
+    res.json(user);
+  } catch (err) {
+    console.error("Errore nel recupero utente:", err);
+    res.status(500).json({ message: "Errore server" });
   }
 });
 

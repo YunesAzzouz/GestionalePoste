@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # --------------------
   # SERVIZIO KEYCLOAK
@@ -14,8 +12,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+
       KC_DB: dev-file # Usa il DB file interno per Keycloak
     networks:
       - posteapp_network

@@ -22,12 +22,12 @@ Questo repository contiene un backend Node.js (Express) che espone API per la ge
 
 ## Struttura rilevante
 
-- `Server.js` - server Express principale e definizione API
+- `server.js` - server Express principale e definizione API
 - `package.json` - dipendenze e script
 - `docker-compose.yml` - compose per Keycloak + backend
 - `Dockerfile` - Dockerfile per il backend
 - `docker/key-cloak/realm-export.json` - configurazione del realm Keycloak (PosteApp)
-- `Utente.html`, `dipendente.html`, `admin.html` - frontend statico
+- `utente.html`, `dipendente.html`, `admin.html` - frontend statico
 - `scripts/` - JavaScript client (Keycloak init, ticket, ecc.)
 
 ## Requisiti
@@ -67,7 +67,7 @@ Esempio (PowerShell):
 npm start
 ```
 
-Il server ascolta di default su `http://localhost:3000` (vedi `Server.js`). Le pagine principali sono raggiungibili come file statici all'URL root (`Utente.html` viene servito per `/`).
+Il server ascolta di default su `http://localhost:3000` (vedi `server.js`). Le pagine principali sono raggiungibili come file statici all'URL root (`utente.html` viene servito per `/`).
 
 ## Avvio con Docker Compose (consigliato per sviluppo rapido)
 
@@ -87,7 +87,7 @@ Note:
 
 ## Endpoint API principali
 
-Il backend espone le seguenti API (implementate in `Server.js`):
+Il backend espone le seguenti API (implementate in `server.js`):
 
 - POST /api/ticket — crea un ticket
 - GET /api/tickets-with-coda — ritorna i ticket con informazioni sulla coda collegata
@@ -114,7 +114,7 @@ Quando Keycloak è attivo, i file JS frontend (es. `scripts/keycloak.js`) inizia
 
 Le pagine principali si trovano nella root del progetto come file statici:
 
-- `Utente.html` — pagina pubblica per generare ticket
+- `utente.html` — pagina pubblica per generare ticket
 - `dipendente.html` — interfaccia per dipendenti/sportelli
 - `admin.html` — dashboard admin con statistiche
 

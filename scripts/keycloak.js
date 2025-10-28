@@ -1,54 +1,62 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  window.keycloak = new Keycloak({
-    url: "http://localhost:8080",
+  const keycloak = new Keycloak({
+    url: "http://localhost:8080", // must be accessible from the browser
     realm: "PosteApp",
     clientId: "poste-frontend"
   });
 
-  try {
-    await keycloak.init({ onLoad: "check-sso", checkLoginIframe: false });
+  const btnLogin = document.querySelector(".btn-login");
+  const btnLogout = document.querySelector(".btn-logout");
 
-    // Global user info
-    window.userType = keycloak.tokenParsed?.userType;
-
-    // Only dipendenti have a sportello
-    if (window.userType === "dipendente") {
-      window.numeroSportello = Number(keycloak.tokenParsed?.Sportello);
-      if (!window.numeroSportello) {
-        alert("Errore: Sportello non trovato nel token Keycloak.");
-      }
-    }
-
-    const btnLogin = document.querySelector(".btn-login");
-    const btnLogout = document.querySelector(".btn-logout");
-
-    if (window.userType) {
-      if (btnLogout) btnLogout.style.display = "inline-block";
-      if (btnLogin) btnLogin.style.display = "none";
-
-      const currentPage = window.location.pathname.split("/").pop();
-      if (currentPage === "utente.html") {
-        if (window.userType === "dipendente") window.location.href = "dipendente.html";
-        if (window.userType === "admin") window.location.href = "admin.html";
-      }
-    } else {
-      if (btnLogin) btnLogin.style.display = "inline-block";
-      if (btnLogout) btnLogout.style.display = "none";
-    }
-
-    if (btnLogin) {
-      btnLogin.addEventListener("click", async () => {
-        await keycloak.login();
+  async function initKeycloak() {
+    try {
+      // Silent login check; does not force login
+      const authenticated = await keycloak.init({
+        onLoad: "check-sso",
+        checkLoginIframe: false
       });
-    }
 
-    if (btnLogout) {
-      btnLogout.addEventListener("click", () => {
-        keycloak.logout({ redirectUri: window.location.origin + "/utente.html" });
-      });
-    }
+      if (authenticated && keycloak.tokenParsed) {
+        const userType = keycloak.tokenParsed.userType; // only "dipendente" or "admin"
+        window.userType = userType;
 
-  } catch (err) {
-    console.error("Keycloak init failed:", err);
+        // Show/hide buttons
+        if (btnLogin) btnLogin.style.display = "none";
+        if (btnLogout) btnLogout.style.display = "inline-block";
+
+        // Redirect based on userType
+        const currentPage = window.location.pathname.split("/").pop();
+
+        if (currentPage === "utente.html") {
+          if (userType === "admin") window.location.href = "admin.html";
+          else if (userType === "dipendente") window.location.href = "dipendente.html";
+          // Guest users (no token) stay on utente.html
+        }
+
+      } else {
+        // Not logged in
+        if (btnLogin) btnLogin.style.display = "inline-block";
+        if (btnLogout) btnLogout.style.display = "none";
+      }
+
+    } catch (err) {
+      console.error("Keycloak init failed:", err);
+      alert("Keycloak initialization failed. Check console for details.");
+    }
   }
+
+  // Button actions
+  if (btnLogin) btnLogin.addEventListener("click", () => {
+    keycloak.login({
+      redirectUri: window.location.origin + "/utente.html"
+    });
+  });
+
+  if (btnLogout) btnLogout.addEventListener("click", () => {
+    keycloak.logout({
+      redirectUri: window.location.origin + "/utente.html"
+    });
+  });
+
+  await initKeycloak();
 });

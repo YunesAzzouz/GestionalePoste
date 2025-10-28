@@ -1,21 +1,4 @@
 document.addEventListener("DOMContentLoaded", async () => {
-  // Wait for keycloak.js to initialize
-  const waitForKeycloak = () => new Promise(resolve => {
-    const interval = setInterval(() => {
-      if (window.userType !== undefined) {
-        clearInterval(interval);
-        resolve();
-      }
-    }, 50);
-  });
-
-  await waitForKeycloak();
-
-  if (window.userType !== "dipendente") {
-    window.location.href = window.userType === "admin" ? "admin.html" : "utente.html";
-    return;
-  }
-
   const numeroSportello = window.numeroSportello;
   const queueBody = document.getElementById("queueBody");
   const currentInfo = document.getElementById("currentInfo");
@@ -69,4 +52,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Initial load + refresh
   await aggiornaTabella();
   setInterval(aggiornaTabella, 10000);
-});     
+});

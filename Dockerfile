@@ -10,10 +10,10 @@ COPY package*.json ./
 RUN npm install
 
 # Copia il resto dei file dell'applicazione
-# Copia tutti i file necessari per l'esecuzione del Server.js e i file statici
+# Copia tutti i file necessari per l'esecuzione del server.js e i file statici
 COPY . .
 
-# Il backend Node.js è configurato per ascoltare sulla porta 3000 (vedi Server.js)
+# Il backend Node.js è configurato per ascoltare sulla porta 3000 (vedi server.js)
 EXPOSE 3000
 
 # Comando per avviare l'applicazione
