@@ -85,16 +85,24 @@ h3 {
     appearance: none;
 }
 
-/*TABELLA ATTESA*/
-.tabella-attesa{
-    display: flex; 
-    flex-direction: column; 
-    width: 100%; 
-    border-collapse: collapse; 
+.ticket-box {
+    border: 2px solid #333;
+    border-radius: 10px;
+    padding: 15px;
+    width: 300px;
+    background: #f8f8f8;
 }
 
+/*TABELLA ATTESA
+.tabella-attesa{
+    display: flex;  
+    width: 100%; 
+    border-collapse: collapse; 
+    border-radius:3px;
+    border: 3px solid var(--color-blue-light);
+}
 
-.riga {
+tbody{
     justify-content: space-between;
     display: flex; 
     width: 100%; 
@@ -114,7 +122,48 @@ h3 {
     width: 300px;
     background: #f8f8f8;
 }
-.tabella-attesa th, .tabella-attesa td {
+.tabella-attesa thead {
     padding: 8px;
+    width: 100%;
     text-align: center;
+}*/
+
+.tabella-attesa th {
+    /* Mantiene lo stile uppercase e sottile dell'intestazione originale */
+    padding: 10px 15px; 
+    text-align: center; 
+    font-size: 10px; 
+    color: #555; 
+    font-weight: normal; 
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #ddd; /* Separatore sotto l'header */
+}
+
+/* Stile per le righe nel corpo della tabella (TBODY) */
+.tabella-attesa tbody tr {
+    /* Linea orizzontale di separazione per tutte le righe */
+    border-bottom: 1px solid #eee; 
+}
+
+/* Stile per le celle di dati (TD) */
+.tabella-attesa td {
+    /* Spaziatura abbondante per far sembrare le righe alte */
+    padding: 15px; 
+    text-align: center; /* Centrato per entrambe le colonne */
+    font-size: 14px;
+    color: #333; 
+    /* Testo in grassetto per i dati, come nell'immagine originale */
+    font-weight: bold; 
+}
+
+/* Effetto strisce (righe alternate) come nell'immagine della fattura */
+.tabella-attesa tbody tr:nth-child(even) {
+    background-color: #f7f7f7; /* Leggero grigio per le righe pari */
+}
+
+/* Quando si passa il mouse, dare un leggero feedback visivo (opzionale) */
+.tabella-attesa tbody tr:hover {
+    background-color: #f0f0f0;
+    transition: background-color 0.3s ease;
 }
