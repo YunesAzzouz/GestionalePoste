@@ -127,7 +127,10 @@ tbody{
     width: 100%;
     text-align: center;
 }*/
-
+.tabella-attesa{
+    width: 100%;
+    justify-content: center;
+}
 .tabella-attesa th {
     /* Mantiene lo stile uppercase e sottile dell'intestazione originale */
     padding: 10px 15px; 
