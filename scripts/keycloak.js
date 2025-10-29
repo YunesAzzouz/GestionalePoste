@@ -1,42 +1,54 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const keycloak = new Keycloak({
-    url: "http://localhost:8080", // must be accessible from the browser
+    url: "http://localhost:8080",
     realm: "PosteApp",
     clientId: "poste-frontend"
   });
 
   const btnLogin = document.querySelector(".btn-login");
   const btnLogout = document.querySelector(".btn-logout");
+  const profileBox = document.querySelector(".profile"); // optional div to show info
 
   async function initKeycloak() {
     try {
-      // Silent login check; does not force login
       const authenticated = await keycloak.init({
         onLoad: "check-sso",
         checkLoginIframe: false
       });
 
       if (authenticated && keycloak.tokenParsed) {
-        const userType = keycloak.tokenParsed.userType; // only "dipendente" or "admin"
+        const userType = keycloak.tokenParsed.userType;
         window.userType = userType;
 
-        // Show/hide buttons
         if (btnLogin) btnLogin.style.display = "none";
         if (btnLogout) btnLogout.style.display = "inline-block";
 
-        // Redirect based on userType
-        const currentPage = window.location.pathname.split("/").pop();
+        // fetch user profile from server
+        const res = await fetch("/api/utente-profile", {
+          headers: { Authorization: `Bearer ${keycloak.token}` }
+        });
+        const profile = await res.json();
+        console.log("User profile:", profile);
 
+        if (profileBox) {
+          profileBox.innerHTML = `
+            <p><strong>Utente:</strong> ${profile.preferred_username || profile.email}</p>
+            <p><strong>Email:</strong> ${profile.email || "n/a"}</p>
+            <p><strong>Ruolo:</strong> ${userType || "utente"}</p>
+          `;
+        }
+
+        // Redirect logic
+        const currentPage = window.location.pathname.split("/").pop();
         if (currentPage === "utente.html") {
           if (userType === "admin") window.location.href = "admin.html";
           else if (userType === "dipendente") window.location.href = "dipendente.html";
-          // Guest users (no token) stay on utente.html
         }
 
       } else {
-        // Not logged in
         if (btnLogin) btnLogin.style.display = "inline-block";
         if (btnLogout) btnLogout.style.display = "none";
+        if (profileBox) profileBox.innerHTML = "<p>Non sei autenticato</p>";
       }
 
     } catch (err) {
@@ -45,7 +57,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Button actions
   if (btnLogin) btnLogin.addEventListener("click", () => {
     keycloak.login({
       redirectUri: window.location.origin + "/utente.html"

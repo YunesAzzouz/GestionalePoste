@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/YunesAzzouz/GestionalePoste#readme",
   "dependencies": {
+    "axios": "^1.13.1",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",

@@ -3,6 +3,7 @@ const { MongoClient, ObjectId } = require("mongodb");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const path = require("path");
+const axios = require("axios");
 
 const app = express();
 const port = 3000;
@@ -11,6 +12,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname)));
 
+// -------------------- STATIC FILES --------------------
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "utente.html"));
 });
@@ -23,12 +25,12 @@ app.get("/login.html", (req, res) => {
   res.sendFile(path.join(__dirname, "login.html"));
 });
 
-// MongoDB setup
+// -------------------- MONGODB SETUP --------------------
 const uri = process.env.MONGODB_URI || "mongodb+srv://Giorgia7:100602@servizi.pjgbb1q.mongodb.net/";
 const client = new MongoClient(uri);
 let db;
 
-// Creazione ticket
+// -------------------- CREATE TICKET --------------------
 app.post("/api/ticket", async (req, res) => {
   try {
     const { operazione, id } = req.body;
@@ -69,12 +71,10 @@ app.post("/api/ticket", async (req, res) => {
       numero_sportello: sportelloNumero,
       tempo_attesa: oldTempo + servizio.tempo_medio,
       orario: now,
-      fk_servizio: operazione  // ← Add this field
+      fk_servizio: operazione
     };
 
-
-    const insertResult = await utentiCollection.insertOne(newTicket);
-
+    await utentiCollection.insertOne(newTicket);
     await codaCollection.updateOne(
       { _id: best._id },
       { $inc: { tempo_attesa: servizio.tempo_medio } }
@@ -93,44 +93,43 @@ app.post("/api/ticket", async (req, res) => {
   }
 });
 
+// -------------------- FETCH TICKETS --------------------
 app.get("/api/tickets-with-coda", async (req, res) => {
   try {
     const utenti = db.collection("Utenti");
 
     const result = await utenti.aggregate([
-  {
-    $lookup: {
-      from: "Coda",
-      localField: "fk_coda",
-      foreignField: "_id",
-      as: "coda_info"
-    }
-  },
-  { $unwind: "$coda_info" },
-  {
-    $lookup: {
-      from: "Servizi",
-      localField: "coda_info.servizi",
-      foreignField: "nome_servizio",
-      as: "servizio_info"
-    }
-  },
-  {
-  $project: {
-    id: { $toString: "$_id" },
-    numero_ticket: 1,
-    orario: 1,
-    numero_sportello: "$coda_info.numero_sportello",
-    tempo_attesa_coda: "$coda_info.tempo_attesa",
-    nome_servizio: { $arrayElemAt: ["$servizio_info.nome_servizio", 0] },
-    fk_servizio: "$fk_servizio",
-    tempo_medio: { $arrayElemAt: ["$servizio_info.tempo_medio", 0] }
-  }
-
-  },
-  { $sort: { orario: 1 } }
-]).toArray();
-
+      {
+        $lookup: {
+          from: "Coda",
+          localField: "fk_coda",
+          foreignField: "_id",
+          as: "coda_info"
+        }
+      },
+      { $unwind: "$coda_info" },
+      {
+        $lookup: {
+          from: "Servizi",
+          localField: "coda_info.servizi",
+          foreignField: "nome_servizio",
+          as: "servizio_info"
+        }
+      },
+      {
+        $project: {
+          id: { $toString: "$_id" },
+          numero_ticket: 1,
+          orario: 1,
+          numero_sportello: "$coda_info.numero_sportello",
+          tempo_attesa_coda: "$coda_info.tempo_attesa",
+          nome_servizio: { $arrayElemAt: ["$servizio_info.nome_servizio", 0] },
+          fk_servizio: "$fk_servizio",
+          tempo_medio: { $arrayElemAt: ["$servizio_info.tempo_medio", 0] }
+        }
+      },
+      { $sort: { orario: 1 } }
+    ]).toArray();
 
     res.json(result);
   } catch (err) {
@@ -139,7 +138,7 @@ app.get("/api/tickets-with-coda", async (req, res) => {
   }
 });
 
-// Serve next ticket for a specific sportello and remove it from DB
+// -------------------- DELETE NEXT TICKET --------------------
 app.delete("/api/tickets/next/:numero_sportello", async (req, res) => {
   const numero_sportello = Number(req.params.numero_sportello);
 
@@ -149,29 +148,21 @@ app.delete("/api/tickets/next/:numero_sportello", async (req, res) => {
     const codaCollection = db.collection("Coda");
     const serviziCollection = db.collection("Servizi");
 
-    // Find the oldest (first) ticket for this sportello
     const nextTicket = await utentiCollection.findOne(
       { numero_sportello },
       { sort: { _id: 1 } }
     );
 
-    console.log("Found nextTicket:", nextTicket);
-
     if (!nextTicket) {
       return res.status(404).json({ message: "Nessun utente in attesa." });
     }
 
-    // Fetch related coda document
     const coda = await codaCollection.findOne({ numero_sportello });
-    console.log("Found coda:", coda);
     if (coda) {
-      // Find one of the services this sportello serves
       const servizio = await serviziCollection.findOne({
         nome_servizio: { $in: coda.servizi }
       });
-      console.log("Found servizio:", servizio);
 
-      // Decrement tempo_attesa safely
       const decrement = servizio?.tempo_medio || 0;
       await codaCollection.updateOne(
         { _id: coda._id },
@@ -179,7 +170,6 @@ app.delete("/api/tickets/next/:numero_sportello", async (req, res) => {
       );
     }
 
-    // Remove that ticket
     await utentiCollection.deleteOne({ _id: nextTicket._id });
 
     res.json({
@@ -192,6 +182,7 @@ app.delete("/api/tickets/next/:numero_sportello", async (req, res) => {
   }
 });
 
+// -------------------- CODA FETCH --------------------
 app.get("/api/coda", async (req, res) => {
   try {
     const codaCollection = db.collection("Coda");
@@ -206,7 +197,7 @@ app.get("/api/coda", async (req, res) => {
   }
 });
 
-// Statistica 1: Clienti serviti per ogni servizio
+// -------------------- STATS --------------------
 function getDateRange(range) {
   const now = new Date();
   let start;
@@ -216,20 +207,19 @@ function getDateRange(range) {
       start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       break;
     case "week":
-      const day = now.getDay(); // 0 = Sunday
+      const day = now.getDay();
       start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
       break;
     case "month":
       start = new Date(now.getFullYear(), now.getMonth(), 1);
       break;
     default:
-      start = new Date(0); // all time
+      start = new Date(0);
   }
 
   return start;
 }
 
-// Statistica 1: Clienti serviti per ogni servizio (Admin)
 app.get("/api/stats/services", async (req, res) => {
   try {
     const range = req.query.range || "all";
@@ -237,10 +227,10 @@ app.get("/api/stats/services", async (req, res) => {
 
     const utenti = db.collection("Utenti");
     const stats = await utenti.aggregate([
-      { $match: { orario: { $gte: startDate } } }, // filter by range
+      { $match: { orario: { $gte: startDate } } },
       {
         $group: {
-          _id: "$fk_servizio",       // <- count directly by ticket's service
+          _id: "$fk_servizio",
           clientiServiti: { $sum: 1 }
         }
       },
@@ -254,7 +244,6 @@ app.get("/api/stats/services", async (req, res) => {
   }
 });
 
-// Statistica 2: Clienti serviti per sportello e tipo di servizio (Admin)
 app.get("/api/stats/sportelli", async (req, res) => {
   try {
     const range = req.query.range || "all";
@@ -266,8 +255,8 @@ app.get("/api/stats/sportelli", async (req, res) => {
       {
         $group: {
           _id: {
-            sportello: "$numero_sportello",  // <- sportello from ticket
-            servizio: "$fk_servizio"         // <- actual service requested
+            sportello: "$numero_sportello",
+            servizio: "$fk_servizio"
           },
           clientiServiti: { $sum: 1 }
         }
@@ -282,17 +271,73 @@ app.get("/api/stats/sportelli", async (req, res) => {
   }
 });
 
-app.get("/api/utenteByEmail/:email", async (req, res) => {
+// -------------------- KEYCLOAK INTEGRATION --------------------
+const KEYCLOAK_BASE = process.env.KEYCLOAK_BASE || "http://localhost:8080";
+const KEYCLOAK_REALM = process.env.KEYCLOAK_REALM || "PosteApp";
+const KC_CLIENT_ID = process.env.KC_CLIENT_ID;
+const KC_CLIENT_SECRET = process.env.KC_CLIENT_SECRET;
+
+// Get current user's profile using their Keycloak token
+app.get("/api/utente-profile", async (req, res) => {
   try {
-    const utenti = db.collection("Utenti");
-    const user = await utenti.findOne({ email: req.params.email.trim() });
-    res.json(user);
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Authorization header missing" });
+    }
+    const token = auth.split(" ")[1];
+    const userinfoUrl = `${KEYCLOAK_BASE}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/userinfo`;
+
+    const response = await axios.get(userinfoUrl, {
+      headers: { Authorization: `Bearer ${token}` },
+      timeout: 5000
+    });
+
+    res.json(response.data);
   } catch (err) {
-    console.error("Errore nel recupero utente:", err);
-    res.status(500).json({ message: "Errore server" });
+    console.error("Errore userinfo:", err.response?.data || err.message);
+    const status = err.response?.status || 500;
+    res.status(status).json({ message: "Errore recupero profilo utente", details: err.response?.data || err.message });
   }
 });
 
+// Optional: Admin-only lookup by email
+async function getAdminToken() {
+  const tokenUrl = `${KEYCLOAK_BASE}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`;
+  const params = new URLSearchParams();
+  params.append("grant_type", "client_credentials");
+  params.append("client_id", KC_CLIENT_ID);
+  params.append("client_secret", KC_CLIENT_SECRET);
+
+  const resp = await axios.post(tokenUrl, params.toString(), {
+    headers: { "Content-Type": "application/x-www-form-urlencoded" }
+  });
+  return resp.data.access_token;
+}
+
+app.get("/api/utenteByEmail/:email", async (req, res) => {
+  const email = decodeURIComponent(req.params.email.trim());
+  try {
+    const adminToken = await getAdminToken();
+    const adminUrl = `${KEYCLOAK_BASE}/admin/realms/${KEYCLOAK_REALM}/users?email=${encodeURIComponent(email)}`;
+
+    const resp = await axios.get(adminUrl, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+      timeout: 5000
+    });
+
+    const users = resp.data || [];
+    if (users.length === 0)
+      return res.status(404).json({ message: "Utente non trovato in Keycloak" });
+
+    res.json(users[0]);
+  } catch (err) {
+    console.error("Errore Keycloak admin lookup:", err.response?.data || err.message);
+    const status = err.response?.status || 500;
+    res.status(status).json({ message: "Errore recupero utente da Keycloak", details: err.response?.data || err.message });
+  }
+});
+
+// -------------------- START SERVER --------------------
 async function startServer() {
   try {
     await client.connect();
