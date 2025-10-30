@@ -44,14 +44,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Filter buttons
+  // Bottoni filtri
   document.getElementById("filter-day").addEventListener("click", () => loadStats("day"));
   document.getElementById("filter-week").addEventListener("click", () => loadStats("week"));
   document.getElementById("filter-month").addEventListener("click", () => loadStats("month"));
 
-  // Auto-refresh every 60s
   setInterval(() => loadStats(currentRange), 60000);
 
-  // Initial load
   await loadStats();
 });
