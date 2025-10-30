@@ -50,7 +50,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const data = await res.json();
 
-    // --- NEW: fetch all tickets to recalc estimated wait ---
     const ticketsRes = await fetch("http://localhost:3000/api/tickets-with-coda");
     const allTickets = await ticketsRes.json();
     const ticketsForSportello = allTickets.filter(t => t.numero_sportello === data.numero_sportello);
@@ -79,10 +78,8 @@ async function updateAttesaTable() {
       if (!row) continue;
       const tempoCell = row.querySelector(".tempo-rimanente");
 
-      // Filter tickets for this sportello
       const ticketsForSportello = allTickets.filter(t => t.numero_sportello === i);
 
-      // Sum estimated service times of pending tickets
       const totalTime = ticketsForSportello.reduce((sum, t) => sum + (t.tempo_medio || 0), 0);
 
       tempoCell.textContent = `${totalTime} min`;

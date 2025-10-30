@@ -12,7 +12,6 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname)));
 
-// -------------------- STATIC FILES --------------------
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "utente.html"));
 });
@@ -25,12 +24,10 @@ app.get("/login.html", (req, res) => {
   res.sendFile(path.join(__dirname, "login.html"));
 });
 
-// -------------------- MONGODB SETUP --------------------
 const uri = process.env.MONGODB_URI || "mongodb+srv://Giorgia7:100602@servizi.pjgbb1q.mongodb.net/";
 const client = new MongoClient(uri);
 let db;
 
-// -------------------- CREATE TICKET --------------------
 app.post("/api/ticket", async (req, res) => {
   try {
     const { operazione, id } = req.body;
@@ -93,7 +90,6 @@ app.post("/api/ticket", async (req, res) => {
   }
 });
 
-// -------------------- FETCH TICKETS --------------------
 app.get("/api/tickets-with-coda", async (req, res) => {
   try {
     const utenti = db.collection("Utenti");
@@ -138,7 +134,6 @@ app.get("/api/tickets-with-coda", async (req, res) => {
   }
 });
 
-// -------------------- DELETE NEXT TICKET --------------------
 app.delete("/api/tickets/next/:numero_sportello", async (req, res) => {
   const numero_sportello = Number(req.params.numero_sportello);
 
@@ -182,7 +177,6 @@ app.delete("/api/tickets/next/:numero_sportello", async (req, res) => {
   }
 });
 
-// -------------------- CODA FETCH --------------------
 app.get("/api/coda", async (req, res) => {
   try {
     const codaCollection = db.collection("Coda");
@@ -197,7 +191,6 @@ app.get("/api/coda", async (req, res) => {
   }
 });
 
-// -------------------- STATS --------------------
 function getDateRange(range) {
   const now = new Date();
   let start;
@@ -271,13 +264,11 @@ app.get("/api/stats/sportelli", async (req, res) => {
   }
 });
 
-// -------------------- KEYCLOAK INTEGRATION --------------------
 const KEYCLOAK_BASE = process.env.KEYCLOAK_BASE || "http://localhost:8080";
 const KEYCLOAK_REALM = process.env.KEYCLOAK_REALM || "PosteApp";
 const KC_CLIENT_ID = process.env.KC_CLIENT_ID;
 const KC_CLIENT_SECRET = process.env.KC_CLIENT_SECRET;
 
-// Get current user's profile using their Keycloak token
 app.get("/api/utente-profile", async (req, res) => {
   try {
     const auth = req.headers.authorization;
@@ -300,7 +291,6 @@ app.get("/api/utente-profile", async (req, res) => {
   }
 });
 
-// Optional: Admin-only lookup by email
 async function getAdminToken() {
   const tokenUrl = `${KEYCLOAK_BASE}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`;
   const params = new URLSearchParams();
@@ -337,7 +327,6 @@ app.get("/api/utenteByEmail/:email", async (req, res) => {
   }
 });
 
-// -------------------- START SERVER --------------------
 async function startServer() {
   try {
     await client.connect();

@@ -23,7 +23,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (btnLogin) btnLogin.style.display = "none";
         if (btnLogout) btnLogout.style.display = "inline-block";
 
-        // fetch user profile from server
         const res = await fetch("/api/utente-profile", {
           headers: { Authorization: `Bearer ${keycloak.token}` }
         });
@@ -38,7 +37,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           `;
         }
 
-        // Redirect logic
         const currentPage = window.location.pathname.split("/").pop();
         if (currentPage === "utente.html") {
           if (userType === "admin") window.location.href = "admin.html";
