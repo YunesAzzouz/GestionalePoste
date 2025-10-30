@@ -1,0 +1,128 @@
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* centra orizzontalmente il contenuto */
+  justify-content: flex-start; /* mantiene tutto verso l’alto */
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* ===== MAIN ===== */
+main {
+  width: 95%;
+  max-width: 1200px;
+  background-color: var(--color-bg-light);
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 40px;
+  padding: 40px;
+  box-sizing: border-box;
+}
+
+h2 {
+  color: var(--color-blue-light);
+  font-size: 30px;
+  margin-top: 0;
+  text-align: center;
+}
+
+/* ===== FILTRI ===== */
+.filter-bar {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.filter-bar button {
+  background-color: var(--color-blue-light);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 16px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.filter-bar button:hover {
+  background-color: #3a7ca4;
+}
+
+/* ===== BOX STATISTICHE ===== */
+.summary-box {
+  border: 3px solid var(--color-blue-light);
+  border-radius: 10px;
+  padding: 25px;
+  margin-bottom: 35px;
+  background-color: white;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+}
+
+.summary-box h3 {
+  color: var(--color-blue-light);
+  font-size: 24px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* ===== TABELLE ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+th,
+td {
+  padding: 16px;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: 18px;
+}
+
+th {
+  background-color: var(--color-blue-light);
+  color: white;
+  font-size: 20px;
+}
+
+tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+tr:hover {
+  background-color: var(--color-yellow-accent);
+  color: #000;
+  transition: 0.2s;
+}
+
+/* ===== RESPONSIVE ===== */
+@media screen and (max-width: 768px) {
+  .navbar h1 {
+    font-size: 22px;
+  }
+
+  .filter-bar {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .filter-bar button {
+    width: 80%;
+  }
+
+  th,
+  td {
+    font-size: 16px;
+    padding: 10px;
+  }
+
+  main {
+    padding: 20px;
+  }
+}

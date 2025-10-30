@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pannello Dipendente</title>
+  <link rel="stylesheet" href="CSS/style.css">
+  <link rel="stylesheet" href="CSS/dipendente.css">
+</head>
+
+<body>
+  <div class="navbar">
+    <img src="img/logo.png" class="logo" alt="Logo Poste"/>
+    <h1><strong>Pannello Dipendente</strong></h1>
+    <button id="logoutBtn" class="btn-logout">Logout</button>
+  </div>
+
+  <main>
+    <div id="currentBox">
+      <h2>Attualmente stai servendo: <span id="currentInfo">Nessun utente</span></h2>
+    </div>
+
+    <table id="queueTable">
+      <thead>
+        <tr>
+          <th>Numero</th>     
+          <th>Servizio</th>     
+        </tr>
+      </thead>
+      <tbody id="queueBody">
+        <tr><td colspan="2">Nessun utente in attesa</td></tr>
+      </tbody>
+    </table>
+
+    <div class="btn-container">
+      <button id="nextBtn">Passa al prossimo</button>
+      <button id="endBtn">Termina servizio</button>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/keycloak-js@23.0.3/dist/keycloak.min.js"></script>
+  <script src="scripts/keycloak.js"></script>
+  <script src="scripts/dipendente.js"></script>
+
+</body>
+</html>
