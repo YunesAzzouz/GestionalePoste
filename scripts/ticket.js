@@ -28,67 +28,67 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   btnGenera.addEventListener('click', async () => {
-  const operazione = selectOperazione.value;
-  if (!operazione) return alert("Seleziona un'operazione prima di creare il biglietto!");
+    const operazione = selectOperazione.value;
+    if (!operazione) return alert("Seleziona un'operazione prima di creare il biglietto!");
 
-  const { prefix, time } = operazioniMap[operazione];
-  let counter = parseInt(localStorage.getItem(`counter_${prefix}`)) + 1;
-  localStorage.setItem(`counter_${prefix}`, counter.toString());
-  const ticketNumber = `${prefix}${String(counter).padStart(3, '0')}`;
+    const { prefix, time } = operazioniMap[operazione];
+    let counter = parseInt(localStorage.getItem(`counter_${prefix}`)) + 1;
+    localStorage.setItem(`counter_${prefix}`, counter.toString());
+    const ticketNumber = `${prefix}${String(counter).padStart(3, '0')}`;
 
-  try {
-    const res = await fetch("http://localhost:3000/api/ticket", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        operazione,
-        id: ticketNumber,
-        tempo_operazione: time,
-        fk_servizio: operazione
-      })
-    });
+    try {
+      const res = await fetch("http://localhost:3000/api/ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          operazione,
+          id: ticketNumber,
+          tempo_operazione: time,
+          fk_servizio: operazione
+        })
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    const ticketsRes = await fetch("http://localhost:3000/api/tickets-with-coda");
-    const allTickets = await ticketsRes.json();
-    const ticketsForSportello = allTickets.filter(t => t.numero_sportello === data.numero_sportello);
+      const ticketsRes = await fetch("http://localhost:3000/api/tickets-with-coda");
+      const allTickets = await ticketsRes.json();
+      const ticketsForSportello = allTickets.filter(t => t.numero_sportello === data.numero_sportello);
 
-    const estimatedWait = ticketsForSportello.reduce((sum, t) => sum + (t.tempo_medio || 0), 0);
+      const estimatedWait = ticketsForSportello.reduce((sum, t) => sum + (t.tempo_medio || 0), 0);
 
-    ticketNumero.textContent = ticketNumber;
-    ticketOperazione.textContent = operazione;
-    ticketSportello.textContent = `Sportello ${data.numero_sportello} (Attesa stimata: ${estimatedWait} min)`;
-    ticketBox.style.display = 'block';
+      ticketNumero.textContent = ticketNumber;
+      ticketOperazione.textContent = operazione;
+      ticketSportello.textContent = `Sportello ${data.numero_sportello} (Attesa stimata: ${estimatedWait} min)`;
+      ticketBox.style.display = 'block';
 
-    updateAttesaTable(); 
-  } catch (err) {
-    console.error("Errore:", err);
-    alert("Errore durante la creazione del biglietto");
-  }
-});
-
-async function updateAttesaTable() {
-  try {
-    const res = await fetch("http://localhost:3000/api/tickets-with-coda");
-    const allTickets = await res.json();
-
-    for (let i = 1; i <= 9; i++) {
-      const row = document.getElementById(`sportello-${i}`);
-      if (!row) continue;
-      const tempoCell = row.querySelector(".tempo-rimanente");
-
-      const ticketsForSportello = allTickets.filter(t => t.numero_sportello === i);
-
-      const totalTime = ticketsForSportello.reduce((sum, t) => sum + (t.tempo_medio || 0), 0);
-
-      tempoCell.textContent = `${totalTime} min`;
+      updateAttesaTable(); 
+    } catch (err) {
+      console.error("Errore:", err);
+      alert("Errore durante la creazione del biglietto");
     }
-  } catch (err) {
-    console.error("Errore aggiornamento tabella attesa:", err);
-  }
-}
+  });
 
-updateAttesaTable();
-setInterval(updateAttesaTable, 10000);
+  async function updateAttesaTable() {
+    try {
+      const res = await fetch("http://localhost:3000/api/tickets-with-coda");
+      const allTickets = await res.json();
+
+      for (let i = 1; i <= 9; i++) {
+        const row = document.getElementById(`sportello-${i}`);
+        if (!row) continue;
+        const tempoCell = row.querySelector(".tempo-rimanente");
+
+        const ticketsForSportello = allTickets.filter(t => t.numero_sportello === i);
+
+        const totalTime = ticketsForSportello.reduce((sum, t) => sum + (t.tempo_medio || 0), 0);
+
+        tempoCell.textContent = `${totalTime} min`;
+      }
+    } catch (err) {
+      console.error("Errore aggiornamento tabella attesa:", err);
+    }
+  }
+
+  updateAttesaTable();
+  setInterval(updateAttesaTable, 10000);
 });

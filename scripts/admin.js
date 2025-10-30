@@ -19,7 +19,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       currentRange = range;
 
-      // Statistica 1
       const res1 = await fetch(`http://localhost:3000/api/stats/services?range=${range}`);
       const statsServices = await res1.json();
       servicesTable.innerHTML = "";
@@ -29,7 +28,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         servicesTable.appendChild(tr);
       });
 
-      // Statistica 2
       const res2 = await fetch(`http://localhost:3000/api/stats/sportelli?range=${range}`);
       const statsSportelli = await res2.json();
       sportelliTable.innerHTML = "";
@@ -44,7 +42,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Bottoni filtri
   document.getElementById("filter-day").addEventListener("click", () => loadStats("day"));
   document.getElementById("filter-week").addEventListener("click", () => loadStats("week"));
   document.getElementById("filter-month").addEventListener("click", () => loadStats("month"));

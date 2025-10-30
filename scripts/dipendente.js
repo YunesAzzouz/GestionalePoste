@@ -49,7 +49,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentInfo.textContent = "Servizio terminato.";
   });
 
-  // Initial load + refresh
   await aggiornaTabella();
   setInterval(aggiornaTabella, 10000);
 });

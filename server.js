@@ -20,10 +20,6 @@ app.get("/dipendente.html", (req, res) => {
   res.sendFile(path.join(__dirname, "dipendente.html"));
 });
 
-app.get("/login.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "login.html"));
-});
-
 const uri = process.env.MONGODB_URI || "mongodb+srv://Giorgia7:100602@servizi.pjgbb1q.mongodb.net/";
 const client = new MongoClient(uri);
 let db;

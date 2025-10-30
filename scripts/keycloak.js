@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const btnLogin = document.querySelector(".btn-login");
   const btnLogout = document.querySelector(".btn-logout");
-  const profileBox = document.querySelector(".profile"); // optional div to show info
+  const profileBox = document.querySelector(".profile"); 
 
   async function initKeycloak() {
     try {
@@ -51,7 +51,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     } catch (err) {
       console.error("Keycloak init failed:", err);
-      alert("Keycloak initialization failed. Check console for details.");
     }
   }
 

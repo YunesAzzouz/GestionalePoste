@@ -4,67 +4,42 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pannello Dipendente</title>
-
-  <!-- Collegamento ai file CSS per lo stile generale e quello specifico del pannello dipendente -->
   <link rel="stylesheet" href="CSS/style.css">
   <link rel="stylesheet" href="CSS/dipendente.css">
 </head>
 
 <body>
-
-  <!-- NAVBAR: intestazione della pagina -->
   <div class="navbar">
-    <!-- Logo dell’azienda -->
     <img src="img/logo.png" class="logo" alt="Logo Poste"/>
-
-    <!-- Titolo principale del pannello -->
     <h1><strong>Pannello Dipendente</strong></h1>
-
-    <!-- Bottone per il logout del dipendente -->
     <button id="logoutBtn" class="btn-logout">Logout</button>
   </div>
 
-  <!-- CONTENUTO PRINCIPALE DELLA PAGINA -->
   <main>
-    <!-- Sezione che mostra l’utente attualmente in servizio -->
     <div id="currentBox">
       <h2>Attualmente stai servendo: <span id="currentInfo">Nessun utente</span></h2>
-      <!-- L’elemento <span> verrà aggiornato dinamicamente da JavaScript 
-           per mostrare il numero o nome dell’utente attualmente servito -->
     </div>
 
-    <!-- TABELLA DELLA CODA DEGLI UTENTI IN ATTESA -->
     <table id="queueTable">
       <thead>
         <tr>
-          <th>Numero</th>       <!-- Numero dell’utente o del ticket -->
-          <th>Servizio</th>     <!-- Tipo di servizio richiesto -->
+          <th>Numero</th>     
+          <th>Servizio</th>     
         </tr>
       </thead>
       <tbody id="queueBody">
-        <!-- Corpo della tabella che sarà popolato dinamicamente via JavaScript -->
         <tr><td colspan="2">Nessun utente in attesa</td></tr>
       </tbody>
     </table>
 
-    <!-- SEZIONE BOTTONI DI CONTROLLO -->
     <div class="btn-container">
-      <!-- Bottone per passare all’utente successivo nella coda -->
       <button id="nextBtn">Passa al prossimo</button>
-
-      <!-- Bottone per terminare il servizio dell’utente corrente -->
       <button id="endBtn">Termina servizio</button>
     </div>
   </main>
 
-  <!-- Inclusione della libreria Keycloak per la gestione dell’autenticazione -->
   <script src="https://cdn.jsdelivr.net/npm/keycloak-js@23.0.3/dist/keycloak.min.js"></script>
-
-  <!-- Script per configurare e gestire Keycloak (login, logout, token, ecc.) -->
   <script src="scripts/keycloak.js"></script>
-
-  <!-- Script principale che gestisce la logica del pannello dipendente 
-       (interazioni con la coda, aggiornamento tabella, pulsanti, ecc.) -->
   <script src="scripts/dipendente.js"></script>
 
 </body>
